@@ -205,6 +205,9 @@
   },
   "layout": {
     "skipToContent": "Spring naar inhoud",
-    "toggleMenu": "Menu wisselen"
+    "toggleMenu": "Menu wisselen",
+    "primaryNav": "Hoofdmenu",
+    "openMenu": "Menu openen",
+    "closeMenu": "Menu sluiten"
   }
 }

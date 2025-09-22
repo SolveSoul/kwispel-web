@@ -60,10 +60,12 @@ export function wireLanguageControls(root) {
 }
 
 export function renderHeader(navItemsMarkup) {
+  const languageControls = renderLanguageOptions();
+
   return `
     <header class="site-header">
       <div class="site-container">
-        <nav class="flex items-center justify-between gap-6">
+        <nav class="flex items-center justify-between gap-6" aria-label="${t('layout.primaryNav')}">
           <div class="flex items-center gap-3">
             <div class="flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 text-2xl font-heading text-accent shadow-soft">
               K
@@ -73,19 +75,106 @@ export function renderHeader(navItemsMarkup) {
           <button
             class="inline-flex h-12 w-12 items-center justify-center rounded-full border border-accent/20 bg-white text-accent transition md:hidden"
             type="button"
-            aria-label="${t('layout.toggleMenu')}"
+            data-mobile-nav-toggle
+            aria-controls="mobile-navigation"
+            aria-expanded="false"
+            aria-label="${t('layout.openMenu')}"
+            data-open-label="${t('layout.openMenu')}"
+            data-close-label="${t('layout.closeMenu')}"
           >
-            <span class="sr-only">${t('layout.toggleMenu')}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-6 w-6">
+            <span class="sr-only" data-mobile-nav-toggle-label>${t('layout.openMenu')}</span>
+            <svg data-mobile-nav-icon="open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-6 w-6">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+            <svg data-mobile-nav-icon="close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="hidden h-6 w-6">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 6l12 12M18 6l-12 12" />
             </svg>
           </button>
           <div class="hidden items-center gap-6 md:flex">
             ${navItemsMarkup}
-            ${renderLanguageOptions()}
+            ${languageControls}
           </div>
         </nav>
+        <div class="mobile-nav" id="mobile-navigation" data-mobile-nav hidden>
+          <div class="mobile-nav__panel">
+            <div class="mobile-nav__links">
+              ${navItemsMarkup}
+            </div>
+            <div class="mobile-nav__footer" data-mobile-nav-footer>
+              ${languageControls}
+            </div>
+          </div>
+        </div>
       </div>
     </header>
   `;
+}
+
+export function wireMobileNavigation(root) {
+  const toggle = root.querySelector('[data-mobile-nav-toggle]');
+  const mobileNav = root.querySelector('[data-mobile-nav]');
+
+  if (!toggle || !mobileNav) {
+    return;
+  }
+
+  const openLabel = toggle.dataset.openLabel || toggle.getAttribute('aria-label') || '';
+  const closeLabel = toggle.dataset.closeLabel || openLabel;
+  const labelElement = toggle.querySelector('[data-mobile-nav-toggle-label]');
+  const icons = toggle.querySelectorAll('[data-mobile-nav-icon]');
+
+  let isOpen = false;
+
+  function updateState() {
+    toggle.setAttribute('aria-expanded', String(isOpen));
+    const label = isOpen ? closeLabel : openLabel;
+    toggle.setAttribute('aria-label', label);
+
+    if (labelElement) {
+      labelElement.textContent = label;
+    }
+
+    icons.forEach((icon) => {
+      const isCloseIcon = icon.dataset.mobileNavIcon === 'close';
+      icon.classList.toggle('hidden', isCloseIcon ? !isOpen : isOpen);
+    });
+
+    if (isOpen) {
+      mobileNav.removeAttribute('hidden');
+      document.addEventListener('keydown', handleKeyDown);
+      const focusTarget = mobileNav.querySelector('a, button');
+
+      if (focusTarget && typeof focusTarget.focus === 'function') {
+        focusTarget.focus();
+      }
+    } else {
+      mobileNav.setAttribute('hidden', '');
+      document.removeEventListener('keydown', handleKeyDown);
+    }
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === 'Escape') {
+      isOpen = false;
+      updateState();
+      toggle.focus();
+    }
+  }
+
+  toggle.addEventListener('click', () => {
+    isOpen = !isOpen;
+    updateState();
+  });
+
+  mobileNav.addEventListener('click', (event) => {
+    const target = event.target;
+    const linkTarget = target && typeof target.closest === 'function' ? target.closest('a[href]') : null;
+
+    if (linkTarget) {
+      isOpen = false;
+      updateState();
+    }
+  });
+
+  updateState();
 }

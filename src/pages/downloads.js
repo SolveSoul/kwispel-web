@@ -2,7 +2,7 @@ import '../styles/global.css';
 import { setLanguage, t } from '../i18n.js';
 import { resolveNavItems } from '../content/navigation.js';
 import { getColoringPages } from '../content/downloads.js';
-import { renderFooter, renderHeader, wireLanguageControls } from '../ui/layout.js';
+import { renderFooter, renderHeader, wireLanguageControls, wireMobileNavigation } from '../ui/layout.js';
 
 const appRoot = document.querySelector('#app');
 
@@ -25,7 +25,7 @@ function createNavMarkup() {
   return items
     .map(
       ({ key, href }) => `
-        <a class="text-base font-medium text-text transition hover:text-accent" href="${href}">
+        <a class="nav-link" href="${href}">
           ${t(key)}
         </a>
       `,
@@ -131,6 +131,7 @@ function render() {
   `;
 
   wireLanguageControls(appRoot);
+  wireMobileNavigation(appRoot);
 }
 
 document.addEventListener('localechange', render);
