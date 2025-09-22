@@ -95,7 +95,7 @@ export function renderHeader(navItemsMarkup) {
             ${languageControls}
           </div>
         </nav>
-        <div class="mobile-nav" id="mobile-navigation" data-mobile-nav hidden>
+        <div class="mobile-nav" id="mobile-navigation" data-mobile-nav hidden aria-hidden="true">
           <div class="mobile-nav__panel">
             <div class="mobile-nav__links">
               ${navItemsMarkup}
@@ -115,7 +115,7 @@ export function wireMobileNavigation(root) {
   const mobileNav = root.querySelector('[data-mobile-nav]');
 
   if (!toggle || !mobileNav) {
-    return;
+    return () => {};
   }
 
   const openLabel = toggle.dataset.openLabel || toggle.getAttribute('aria-label') || '';
@@ -124,8 +124,25 @@ export function wireMobileNavigation(root) {
   const icons = toggle.querySelectorAll('[data-mobile-nav-icon]');
 
   let isOpen = false;
+  let closingTimeout;
+  let frameId;
+  let destroyed = false;
 
   function updateState() {
+    if (destroyed) {
+      return;
+    }
+
+    if (closingTimeout) {
+      clearTimeout(closingTimeout);
+      closingTimeout = undefined;
+    }
+
+    if (frameId) {
+      cancelAnimationFrame(frameId);
+      frameId = undefined;
+    }
+
     toggle.setAttribute('aria-expanded', String(isOpen));
     const label = isOpen ? closeLabel : openLabel;
     toggle.setAttribute('aria-label', label);
@@ -141,15 +158,29 @@ export function wireMobileNavigation(root) {
 
     if (isOpen) {
       mobileNav.removeAttribute('hidden');
-      document.addEventListener('keydown', handleKeyDown);
-      const focusTarget = mobileNav.querySelector('a, button');
+      mobileNav.dataset.state = 'opening';
+      mobileNav.setAttribute('aria-hidden', 'false');
+      syncHeight();
+      frameId = requestAnimationFrame(() => {
+        mobileNav.dataset.state = 'open';
+        frameId = undefined;
+        const focusTarget = mobileNav.querySelector('a, button');
 
-      if (focusTarget && typeof focusTarget.focus === 'function') {
-        focusTarget.focus();
-      }
+        if (focusTarget && typeof focusTarget.focus === 'function') {
+          focusTarget.focus();
+        }
+      });
+      document.addEventListener('keydown', handleKeyDown);
     } else {
-      mobileNav.setAttribute('hidden', '');
+      mobileNav.dataset.state = 'closing';
+      mobileNav.setAttribute('aria-hidden', 'true');
+      mobileNav.style.maxHeight = '0px';
       document.removeEventListener('keydown', handleKeyDown);
+      closingTimeout = window.setTimeout(() => {
+        mobileNav.dataset.state = 'closed';
+        mobileNav.setAttribute('hidden', '');
+        closingTimeout = undefined;
+      }, 220);
     }
   }
 
@@ -161,12 +192,12 @@ export function wireMobileNavigation(root) {
     }
   }
 
-  toggle.addEventListener('click', () => {
+  function handleToggleClick() {
     isOpen = !isOpen;
     updateState();
-  });
+  }
 
-  mobileNav.addEventListener('click', (event) => {
+  function handleMobileNavClick(event) {
     const target = event.target;
     const linkTarget = target && typeof target.closest === 'function' ? target.closest('a[href]') : null;
 
@@ -174,7 +205,54 @@ export function wireMobileNavigation(root) {
       isOpen = false;
       updateState();
     }
-  });
+  }
 
+  function syncHeight() {
+    mobileNav.style.maxHeight = `${mobileNav.scrollHeight}px`;
+  }
+
+  function handleResize() {
+    if (!isOpen) {
+      return;
+    }
+
+    syncHeight();
+  }
+
+  function handleTransitionEnd(event) {
+    if (event.propertyName === 'max-height' && !isOpen && !mobileNav.hasAttribute('hidden')) {
+      mobileNav.setAttribute('hidden', '');
+    }
+  }
+
+  toggle.addEventListener('click', handleToggleClick);
+  mobileNav.addEventListener('click', handleMobileNavClick);
+  mobileNav.addEventListener('transitionend', handleTransitionEnd);
+  window.addEventListener('resize', handleResize);
+
+  mobileNav.dataset.state = 'closed';
+  mobileNav.style.maxHeight = '0px';
   updateState();
+
+  const cleanup = () => {
+    destroyed = true;
+
+    if (closingTimeout) {
+      clearTimeout(closingTimeout);
+      closingTimeout = undefined;
+    }
+
+    if (frameId) {
+      cancelAnimationFrame(frameId);
+      frameId = undefined;
+    }
+
+    document.removeEventListener('keydown', handleKeyDown);
+    toggle.removeEventListener('click', handleToggleClick);
+    mobileNav.removeEventListener('click', handleMobileNavClick);
+    mobileNav.removeEventListener('transitionend', handleTransitionEnd);
+    window.removeEventListener('resize', handleResize);
+  };
+
+  return cleanup;
 }

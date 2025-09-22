@@ -25,6 +25,11 @@ function createNavMarkup(items) {
 function render() {
   const navMarkup = createNavMarkup(resolveNavItems());
 
+  if (typeof appRoot.__mobileNavCleanup === 'function') {
+    appRoot.__mobileNavCleanup();
+    appRoot.__mobileNavCleanup = undefined;
+  }
+
   appRoot.innerHTML = `
     <div class="site-shell">
       <a class="visually-hidden" href="#main">${t('layout.skipToContent')}</a>
@@ -146,7 +151,7 @@ function render() {
   `;
 
   wireLanguageControls(appRoot);
-  wireMobileNavigation(appRoot);
+  appRoot.__mobileNavCleanup = wireMobileNavigation(appRoot);
 }
 
 document.addEventListener('localechange', render);
