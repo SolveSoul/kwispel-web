@@ -127,6 +127,32 @@ function render() {
               </div>
             </div>
           </section>
+          <section id="about" class="grid gap-10 rounded-3xl border border-accent/10 bg-white p-8 shadow-soft md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:p-12">
+            <div class="flex flex-col gap-4">
+              <h2 class="text-3xl">${t('characters.heading')}</h2>
+              <p class="text-base text-text/80 md:text-lg">${t('characters.intro')}</p>
+              <a class="inline-flex w-fit items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition hover:-translate-y-0.5" href="#games">
+                ${t('characters.cta')}
+              </a>
+            </div>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
+              ${t('characters.list')
+                .map(
+                  ({ name, role, description }) => `
+                    <article class="flex h-full flex-col gap-3 rounded-2xl border border-accent/15 bg-muted p-5 shadow-soft">
+                      <span class="text-sm font-semibold uppercase tracking-wide text-accent/70">${role}</span>
+                      <h3 class="text-2xl">${name}</h3>
+                      <p class="text-sm text-text/80">${description}</p>
+                    </article>
+                  `,
+                )
+                .join('')}
+            </div>
+          </section>
+          <section class="flex flex-col gap-6 rounded-3xl bg-white p-8 shadow-soft text-center md:p-12">
+            <h2 class="text-3xl">${t('testimonials.heading')}</h2>
+            <p class="text-base text-text/80 md:text-lg">${t('testimonials.placeholder')}</p>
+          </section>
           <section id="games" class="flex flex-col gap-6">
             <div class="flex flex-col gap-3 text-center">
               <h2 class="text-3xl">${t('games.heading')}</h2>

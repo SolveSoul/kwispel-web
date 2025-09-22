@@ -22,6 +22,27 @@
     ],
     "cta": "Bestel of lees meer"
   },
+  "characters": {
+    "heading": "Ontmoet de vriendjes",
+    "intro": "Kwispel en Chilli staan centraal. Zodra er meer vriendjes klaar zijn, voegen we ze hier toe.",
+    "list": [
+      {
+        "name": "Kwispel",
+        "role": "Nieuwsgierige corgi",
+        "description": "Zit boordevol energie en leert elke dag iets nieuws dankzij zijn grote hart voor vriendjes."
+      },
+      {
+        "name": "Chilli",
+        "role": "Spelletjeskapitein",
+        "description": "Plant vrolijke spelletjes en helpt kinderen mee te puzzelen, zoeken en lachen."
+      }
+    ],
+    "cta": "Houd hun avonturen in de gaten"
+  },
+  "testimonials": {
+    "heading": "Wat ouders vertellen",
+    "placeholder": "Binnenkort delen we echte ervaringen van Vlaamse gezinnen. Heb jij feedback? Laat het ons weten via hallo@kwispel.be."
+  },
   "games": {
     "heading": "Speelse activiteiten",
     "memory": {
