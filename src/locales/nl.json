@@ -47,7 +47,8 @@
     "heading": "Speelse activiteiten",
     "memory": {
       "title": "Memory",
-      "description": "Vind twee dezelfde vriendjes en train je geheugen."
+      "description": "Draai kaartjes om en zoek twee dezelfde letters. Later verruilen we de letters voor illustraties van Kwispel en zijn vriendjes.",
+      "cta": "Speel memory"
     },
     "puzzles": {
       "title": "Puzzels",
@@ -58,6 +59,92 @@
       "description": "Pak je potloden en geef Kwispel vrolijke kleuren."
     },
     "comingSoon": "Binnenkort beschikbaar"
+  },
+  "gamesPage": {
+    "hero": {
+      "eyebrow": "Kwispel spelletjes",
+      "heading": "Speel mee met Kwispel en Chilli",
+      "intro": "Hier bundelen we alle activiteiten die we stap voor stap uitwerken. Elke game is ontworpen voor korte, speelse momenten samen met je kind.",
+      "cta": "Terug naar de startpagina"
+    },
+    "overview": {
+      "heading": "Mini-games in voorbereiding",
+      "description": "Deze spellen bouwen we één voor één uit. Ondertussen vind je hier al een voorsmaakje van wat je kan verwachten en hoe je thuis kunt oefenen."
+    },
+    "activities": {
+      "memory": {
+        "status": "Nu speelbaar",
+        "bullets": [
+          "Kies uit drie niveaus met 6, 8 of 12 kaartjes.",
+          "Vrolijke geluidjes helpen bij een juiste of foute match.",
+          "Klaar? Klik op 'Speel opnieuw' voor nog een rondje."
+        ],
+        "cta": "Start het memory-spel"
+      },
+      "puzzles": {
+        "status": "Conceptfase",
+        "bullets": [
+          "Digitale legpuzzels met 6 en 12 stukken",
+          "Zachte animaties wanneer een puzzelstuk juist ligt",
+          "Printbare versie om thuis te knippen en leggen"
+        ]
+      },
+      "coloring": {
+        "status": "Bijna klaar",
+        "bullets": [
+          "Interactieve kleurplaat met grote vlakken",
+          "Optie om favoriete kleuren op te slaan",
+          "Extra patronen geïnspireerd op Kwispels wereld"
+        ]
+      }
+    },
+    "availabilityNote": "Volg onze sociale media om te weten wanneer de mini-games live gaan.",
+    "tips": {
+      "heading": "Speeltips voor thuis",
+      "items": [
+        "Plan korte spelmomenten van 10 tot 15 minuten, ideaal voor peuters en kleuters.",
+        "Combineer digitale spelletjes met tastbare materialen zoals kaartjes of blokken.",
+        "Bespreek na het spelen wat er goed ging en wat jullie volgende keer willen proberen."
+      ]
+    }
+  },
+  "memoryGame": {
+    "pageEyebrow": "Kwispel spelletje",
+    "pageTitle": "Memory met letters",
+    "pageIntro": "Help Kwispel de juiste lettertjes te vinden. Later vervangen we de letters door speelse illustraties van zijn vriendjes.",
+    "instructions": "Tik op een kaartje om het om te draaien. Vind twee dezelfde letters om een paar te maken.",
+    "difficultyHeading": "Kies je uitdaging",
+    "difficultyIntro": "Selecteer een niveau dat past bij de leeftijd en aandacht van je speelmaatje.",
+    "difficulty": {
+      "sprout": {
+        "label": "Spruit",
+        "subLabel": "3 paren • 6 kaartjes"
+      },
+      "paws": {
+        "label": "Kwispelpoot",
+        "subLabel": "4 paren • 8 kaartjes"
+      },
+      "tails": {
+        "label": "Staartwiebel",
+        "subLabel": "6 paren • 12 kaartjes"
+      }
+    },
+    "startButton": "Start spel",
+    "mute": {
+      "on": "Geluid uit",
+      "off": "Geluid aan"
+    },
+    "hud": {
+      "moves": "Beurten",
+      "pairs": "Paren gevonden"
+    },
+    "currentDifficulty": "Niveau: {level}",
+    "finishedTitle": "Hoera!",
+    "finishedMessage": "Je vond alle letters in {moves} beurten.",
+    "playAgain": "Speel nog een keer",
+    "chooseLevel": "Kies ander niveau",
+    "letterLabel": "Kaartje met letter {letter}",
+    "playCta": "Speel het memory-spel"
   },
   "downloads": {
     "heading": "Download kleurplaten",

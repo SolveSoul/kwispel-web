@@ -1,5 +1,8 @@
 import './styles/global.css';
-import { getAvailableLanguages, getLanguage, setLanguage, t } from './i18n.js';
+import { setLanguage, t } from './i18n.js';
+import { resolveNavItems } from './content/navigation.js';
+import { getActivities } from './content/activities.js';
+import { renderFooter, renderHeader, wireLanguageControls } from './ui/layout.js';
 
 const appRoot = document.querySelector('#app');
 
@@ -7,85 +10,25 @@ if (!appRoot) {
   throw new Error('Kan #app niet vinden in het document.');
 }
 
-const NAV_ITEMS = [
-  { key: 'nav.home', href: '#home' },
-  { key: 'nav.games', href: '#games' },
-  { key: 'nav.downloads', href: '#downloads' },
-  { key: 'nav.about', href: '#about' },
-];
-
-function renderLanguageOptions() {
-  const languages = getAvailableLanguages();
-  const active = getLanguage();
-
-  if (languages.length <= 1) {
-    return `
-      <button
-        class="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm text-accent opacity-70"
-        type="button"
-        disabled
-        aria-disabled="true"
-      >
-        <span aria-hidden="true">🌍</span>
-        ${t('nav.language')}
-      </button>
-    `;
-  }
-
-  const buttons = languages
+function createNavMarkup(items) {
+  return items
     .map(
-      (code) => `
-        <button
-          class="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm text-accent hover:border-accent"
-          type="button"
-          data-lang="${code}"
-          aria-pressed="${code === active}"
-        >
-          ${code.toUpperCase()}
-        </button>
+      ({ key, href }) => `
+        <a class="text-base font-medium text-text transition hover:text-accent" href="${href}">
+          ${t(key)}
+        </a>
       `,
     )
     .join('');
-
-  return `<div class="flex flex-wrap items-center gap-2" role="group" aria-label="${t('nav.language')}">${buttons}</div>`;
 }
 
 function render() {
+  const navMarkup = createNavMarkup(resolveNavItems());
+
   appRoot.innerHTML = `
     <div class="site-shell">
       <a class="visually-hidden" href="#main">${t('layout.skipToContent')}</a>
-      <header class="site-header">
-        <div class="site-container">
-          <nav class="flex items-center justify-between gap-6">
-            <div class="flex items-center gap-3">
-              <div class="flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 text-2xl font-heading text-accent shadow-soft">
-                K
-              </div>
-              <span class="text-2xl font-heading text-accent">Kwispel</span>
-            </div>
-            <button
-              class="inline-flex h-12 w-12 items-center justify-center rounded-full border border-accent/20 bg-white text-accent transition md:hidden"
-              type="button"
-              aria-label="${t('layout.toggleMenu')}"
-            >
-              <span class="sr-only">${t('layout.toggleMenu')}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-6 w-6">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7h16M4 12h16M4 17h16" />
-              </svg>
-            </button>
-            <div class="hidden items-center gap-6 md:flex">
-              ${NAV_ITEMS.map(
-                ({ key, href }) => `
-                  <a class="text-base font-medium text-text transition hover:text-accent" href="${href}">
-                    ${t(key)}
-                  </a>
-                `,
-              ).join('')}
-              ${renderLanguageOptions()}
-            </div>
-          </nav>
-        </div>
-      </header>
+      ${renderHeader(navMarkup)}
       <main id="main" class="site-main">
         <div class="site-container flex flex-col gap-16">
           <section id="home" class="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
@@ -159,20 +102,25 @@ function render() {
               <p class="text-base text-text/70 md:text-lg">${t('games.comingSoon')}</p>
             </div>
             <div class="grid gap-6 md:grid-cols-3">
-              ${['memory', 'puzzles', 'coloring']
-                .map(
-                  (activity) => `
+              ${getActivities()
+                .map(({ id }) => {
+                  const isMemory = id === 'memory';
+                  const actionMarkup = isMemory
+                    ? `<a class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent" href="./memory.html">${t('games.memory.cta')}<span aria-hidden="true">→</span></a>`
+                    : `<span class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent">${t('games.comingSoon')}<span aria-hidden="true">→</span></span>`;
+
+                  return `
                     <article class="flex h-full flex-col gap-4 rounded-3xl bg-white p-6 shadow-soft">
                       <div class="flex h-40 items-center justify-center rounded-2xl border border-dashed border-accent/30 bg-muted text-accent">
-                        <span class="text-center text-lg font-heading">${t(`games.${activity}.title`)}</span>
+                        <span class="text-center text-lg font-heading">${t(`games.${id}.title`)}</span>
                       </div>
                       <div class="flex flex-1 flex-col justify-between gap-4">
-                        <p class="text-sm text-text/80">${t(`games.${activity}.description`)}</p>
-                        <span class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent">${t('games.comingSoon')}<span aria-hidden="true">→</span></span>
+                        <p class="text-sm text-text/80">${t(`games.${id}.description`)}</p>
+                        ${actionMarkup}
                       </div>
                     </article>
-                  `,
-                )
+                  `;
+                })
                 .join('')}
             </div>
           </section>
@@ -193,28 +141,11 @@ function render() {
           </section>
         </div>
       </main>
-      <footer class="site-footer">
-        <div class="site-container space-y-2">
-          <small>${t('footer.legal')}</small>
-          <div>
-            <small>${t('footer.contact')}</small>
-          </div>
-        </div>
-      </footer>
+      ${renderFooter()}
     </div>
   `;
 
-  wireLanguageControls();
-}
-
-function wireLanguageControls() {
-  const langButtons = appRoot.querySelectorAll('[data-lang]');
-
-  langButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      setLanguage(button.dataset.lang);
-    });
-  });
+  wireLanguageControls(appRoot);
 }
 
 document.addEventListener('localechange', render);
