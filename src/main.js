@@ -128,7 +128,7 @@ function render() {
             <div class="flex flex-col gap-4">
               <h2 class="text-3xl">${t('downloads.heading')}</h2>
               <p class="text-base text-text/80 md:text-lg">${t('downloads.description')}</p>
-              <a class="inline-flex w-fit items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition hover:-translate-y-0.5" href="#">
+              <a class="inline-flex w-fit items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition hover:-translate-y-0.5" href="./downloads.html">
                 ${t('downloads.cta')}
               </a>
               <p class="text-sm text-text/70">${t('downloads.printingTips')}</p>

@@ -149,8 +149,55 @@
   "downloads": {
     "heading": "Download kleurplaten",
     "description": "Print vrolijke kleurplaten van Kwispel en zijn vriendjes voor urenlang kleurplezier.",
-    "cta": "Download als PDF",
+    "cta": "Bekijk kleurplaten",
     "printingTips": "Tip: print op dikker papier voor minder doordrukken."
+  },
+  "downloadsPage": {
+    "hero": {
+      "eyebrow": "Kleurplezier voor thuis",
+      "heading": "Download en print Kwispel kleurplaten",
+      "intro": "We verzamelen kleurrijke avonturen van Kwispel in handige PDF's. Kies een ontwerp, print het uit en maak er samen een rustig knutselmoment van.",
+      "cta": "Terug naar de startpagina"
+    },
+    "overview": {
+      "heading": "Kleurplaten in aantocht",
+      "description": "De definitieve bestanden krijgen momenteel de laatste illustratie-touch. Ondertussen tonen we alvast wat er binnenkort beschikbaar is.",
+      "note": "PDF-links verschijnen hier zodra ze worden opgeladen."
+    },
+    "actions": {
+      "print": "Print PDF",
+      "download": "Download PDF",
+      "comingSoon": "Binnenkort beschikbaar"
+    },
+    "cards": {
+      "placeholderAlt": "Voorbeeld van de kleurplaat",
+      "tagsLabel": "Bevat"
+    },
+    "items": {
+      "kwispelIntro": {
+        "title": "Kwispel zegt hallo",
+        "description": "Een eenvoudige lijntekening van Kwispel die vrolijk naar de lezers kwispelt.",
+        "tags": ["1 pagina", "Dikke lijnen"]
+      },
+      "chilliPlay": {
+        "title": "Chilli speelt mee",
+        "description": "Chilli rolt een bal naar Kwispel voor een speelse worp.",
+        "tags": ["1 pagina", "Medium lijnen"]
+      },
+      "friendsParade": {
+        "title": "Vriendjesparade",
+        "description": "Kwispel en zijn vriendjes maken een vrolijke stoet met vlaggetjes en confetti.",
+        "tags": ["2 pagina's", "Extra details"]
+      }
+    },
+    "tips": {
+      "heading": "Printtips",
+      "items": [
+        "Gebruik instellingen 'ware grootte' of '100%' zodat alle details mooi blijven.",
+        "Print op iets dikker A4-papier (120 g/m²) om doordrukken te vermijden.",
+        "Laat de kleurplaten eerst even drogen als je met stiften werkt."
+      ]
+    }
   },
   "footer": {
     "legal": "© 2024 Kwispel. Alle rechten voorbehouden.",
