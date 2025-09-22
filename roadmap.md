@@ -18,14 +18,14 @@ Launch a kid-friendly promotional website for the Flemish children’s IP “Kwi
 - **Downloads**: page to download printable coloring pages.
 - **Navigation**: desktop layout with logo left, menu right; responsive mobile nav.
 - **Localization**: Flemish default content with groundwork for future translations.
-- **Tech stack**: Vite + vanilla JS modules, static output compatible with GitHub Pages.
+- **Tech stack**: Vite + vanilla JS modules with Tailwind CSS utility layer, static output compatible with GitHub Pages.
 
 ## Deliverables
 1. Vite project scaffold configured for static deployment.
 2. Landing page (`index.html`) with hero, features, book highlight, testimonials/CTA, footer.
 3. Games page detailing memory, puzzles, coloring activity (with placeholders for game modules).
 4. Downloads page offering coloring pages (placeholder links) and printing tips.
-5. Shared layout components (header/nav, footer) and global styles.
+5. Shared layout components (header/nav, footer) and Tailwind-driven global styles.
 6. Translation-ready content structure (e.g., JSON/JS resources, language toggle scaffolding).
 7. Responsive styling covering common breakpoints (mobile, tablet, desktop).
 8. Documentation for build/deploy workflow (README updates).
@@ -33,7 +33,7 @@ Launch a kid-friendly promotional website for the Flemish children’s IP “Kwi
 ## Milestones & Tasks
 ### Milestone 1: Project Setup
 - Scaffold Vite vanilla project with ES module structure.
-- Configure fonts (Google Fonts preload) and base styles (CSS variables for colors, typography scale).
+- Configure fonts (Google Fonts preload) and Tailwind theme tokens (colors, typography scale).
 - Establish layout shell (header, footer, responsive grid).
 - Implement lightweight localization infrastructure (content resource files, helper utilities) with Flemish default copy.
 

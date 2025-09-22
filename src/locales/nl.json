@@ -1,0 +1,55 @@
+{
+  "nav": {
+    "home": "Start",
+    "games": "Spelletjes",
+    "downloads": "Kleurplaten",
+    "about": "Over Kwispel",
+    "language": "Taal"
+  },
+  "hero": {
+    "title": "Kwispel verwelkomt je!",
+    "subtitle": "Ontdek het vrolijke Vlaamse kinderboek en de speelse wereld rond Kwispel de corgi en zijn vriendjes.",
+    "ctaPrimary": "Ontdek het boek",
+    "ctaSecondary": "Speel mee"
+  },
+  "book": {
+    "heading": "Het boek",
+    "description": "Een warm verhaal voor kinderen van 2 tot 6 jaar, boordevol knusse avonturen en herkenbare emoties.",
+    "features": [
+      "Grappige, herkenbare situaties voor peuters en kleuters",
+      "Zachte illustraties die uitnodigen tot samen lezen",
+      "Stimuleert fijne motoriek en woordenschat"
+    ],
+    "cta": "Bestel of lees meer"
+  },
+  "games": {
+    "heading": "Speelse activiteiten",
+    "memory": {
+      "title": "Memory",
+      "description": "Vind twee dezelfde vriendjes en train je geheugen."
+    },
+    "puzzles": {
+      "title": "Puzzels",
+      "description": "Leg de stukjes op hun plek om de scène te onthullen."
+    },
+    "coloring": {
+      "title": "Kleuren",
+      "description": "Pak je potloden en geef Kwispel vrolijke kleuren."
+    },
+    "comingSoon": "Binnenkort beschikbaar"
+  },
+  "downloads": {
+    "heading": "Download kleurplaten",
+    "description": "Print vrolijke kleurplaten van Kwispel en zijn vriendjes voor urenlang kleurplezier.",
+    "cta": "Download als PDF",
+    "printingTips": "Tip: print op dikker papier voor minder doordrukken."
+  },
+  "footer": {
+    "legal": "© 2024 Kwispel. Alle rechten voorbehouden.",
+    "contact": "Vragen? Mail naar hallo@kwispel.be"
+  },
+  "layout": {
+    "skipToContent": "Spring naar inhoud",
+    "toggleMenu": "Menu wisselen"
+  }
+}

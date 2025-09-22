@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-background text-text font-body min-h-screen leading-relaxed antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading text-accent;
+  }
+
+  a {
+    @apply text-inherit no-underline;
+  }
+
+  a:hover,
+  a:focus {
+    @apply underline;
+  }
+
+  button {
+    @apply font-body rounded-full px-6 py-3 bg-accent text-white text-base shadow-sm transition ease-out duration-150;
+  }
+
+  button:hover,
+  button:focus-visible {
+    @apply -translate-y-0.5 shadow-soft;
+  }
+
+  button:focus-visible,
+  a:focus-visible {
+    @apply outline outline-[3px] outline-offset-4 outline-accent;
+  }
+
+  #app {
+    @apply min-h-screen flex flex-col;
+  }
+}
+
+@layer components {
+  .visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .site-shell {
+    @apply flex flex-1 flex-col;
+  }
+
+  .site-header {
+    @apply bg-background border-b-4 border-accent/15 px-6 py-6;
+  }
+
+  .site-main {
+    @apply flex-1 bg-muted px-6 py-10;
+  }
+
+  .site-container {
+    @apply w-full max-w-5xl mx-auto;
+  }
+
+  .site-footer {
+    @apply bg-accent/10 text-sm text-text text-center px-6 py-6;
+  }
+}
