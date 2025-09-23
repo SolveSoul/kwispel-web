@@ -1,6 +1,19 @@
 import { t } from '../i18n.js';
+import antImage from '../assets/games/memory/ant.png';
+import bumblebeeImage from '../assets/games/memory/bumblebee.png';
+import chilliSittingImage from '../assets/games/memory/chilli_sitting.png';
+import eetbakjeImage from '../assets/games/memory/eetbakje.png';
+import kwispelNeutralImage from '../assets/games/memory/kwispel_neutral.png';
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+const CARD_CATALOG = [
+  { pairKey: 'kwispelNeutral', image: kwispelNeutralImage },
+  { pairKey: 'chilliSitting', image: chilliSittingImage },
+  { pairKey: 'bumblebee', image: bumblebeeImage },
+  { pairKey: 'ant', image: antImage },
+  { pairKey: 'eetbakje', image: eetbakjeImage },
+];
 
 const DIFFICULTY_OPTIONS = [
   { id: 'sprout', pairs: 3 },
@@ -40,17 +53,54 @@ function shuffle(source) {
   return array;
 }
 
-function createDeck(pairCount) {
-  const lettersPool = shuffle(LETTERS).slice(0, pairCount);
+function buildImagePairs(pairCount) {
+  const available = CARD_CATALOG.slice(0, pairCount);
+  const cards = [];
+
+  available.forEach((item, index) => {
+    const pairKey = `${item.pairKey}-${index}`;
+    const cardBase = {
+      pairKey,
+      kind: 'image',
+      labelKey: item.pairKey,
+      image: item.image,
+    };
+    cards.push({ ...cardBase, id: `${pairKey}-a` });
+    cards.push({ ...cardBase, id: `${pairKey}-b` });
+  });
+
+  return cards;
+}
+
+function buildLetterFallbackPairs(requiredPairs, offset = 0) {
+  const lettersPool = shuffle(LETTERS).slice(0, requiredPairs);
   const cards = [];
 
   lettersPool.forEach((letter, index) => {
-    const pairKey = `${letter}-${index}`;
-    cards.push({ id: `${pairKey}-a`, pairKey, letter });
-    cards.push({ id: `${pairKey}-b`, pairKey, letter });
+    const pairKey = `letter-${letter}-${index + offset}`;
+    const cardBase = {
+      pairKey,
+      kind: 'letter',
+      letter,
+    };
+    cards.push({ ...cardBase, id: `${pairKey}-a` });
+    cards.push({ ...cardBase, id: `${pairKey}-b` });
   });
 
-  return shuffle(cards);
+  return cards;
+}
+
+function createDeck(pairCount) {
+  const imagePairs = buildImagePairs(pairCount);
+
+  if (imagePairs.length / 2 === pairCount) {
+    return shuffle(imagePairs);
+  }
+
+  const missingPairs = pairCount - imagePairs.length / 2;
+  const fallbackPairs = buildLetterFallbackPairs(missingPairs, imagePairs.length / 2);
+
+  return shuffle([...imagePairs, ...fallbackPairs]);
 }
 
 export function mountMemoryGame(root) {
@@ -161,29 +211,35 @@ export function mountMemoryGame(root) {
     });
   }
 
-  function beginGame(optionId) {
-    const option = DIFFICULTY_OPTIONS.find((item) => item.id === optionId);
+function beginGame(optionId) {
+  const option = DIFFICULTY_OPTIONS.find((item) => item.id === optionId);
 
-    if (!option) {
-      return;
-    }
-
-    cleanupTimers();
-    const deck = createDeck(option.pairs);
-    state.stage = 'playing';
-    state.difficultyId = option.id;
-    state.deck = deck;
-    state.cardLookup = new Map(deck.map((card) => [card.id, card]));
-    state.flippedIds = [];
-    state.matchedIds = new Set();
-    state.moves = 0;
-    state.isBusy = false;
-    state.startTime = performance.now();
-    state.lastResult = null;
-
-    render();
-    playSound('start');
+  if (!option) {
+    return;
   }
+
+  const hasEnoughArt = CARD_CATALOG.length >= option.pairs;
+
+  if (!hasEnoughArt) {
+    return;
+  }
+
+  cleanupTimers();
+  const deck = createDeck(option.pairs);
+  state.stage = 'playing';
+  state.difficultyId = option.id;
+  state.deck = deck;
+  state.cardLookup = new Map(deck.map((card) => [card.id, card]));
+  state.flippedIds = [];
+  state.matchedIds = new Set();
+  state.moves = 0;
+  state.isBusy = false;
+  state.startTime = performance.now();
+  state.lastResult = null;
+
+  render();
+  playSound('start');
+}
 
   function resetToIntro() {
     cleanupTimers();
@@ -284,7 +340,15 @@ export function mountMemoryGame(root) {
         const isFlipped = state.flippedIds.includes(card.id);
         const isMatched = state.matchedIds.has(card.id);
         const reveal = isFlipped || isMatched;
-        const letterLabel = t('memoryGame.letterLabel').replace('{letter}', card.letter);
+        let ariaLabel = t('memoryGame.hiddenCard');
+
+        if (card.kind === 'image') {
+          ariaLabel = t(`memoryGame.cards.${card.labelKey}`);
+        }
+
+        if (card.kind === 'letter') {
+          ariaLabel = t('memoryGame.letterLabel').replace('{letter}', card.letter);
+        }
 
         const classes = [
           'memory-card inline-flex h-24 sm:h-28 md:h-32 items-center justify-center rounded-3xl border-4 text-3xl font-heading transition-all duration-150',
@@ -300,9 +364,15 @@ export function mountMemoryGame(root) {
             type="button"
             class="${classes}"
             data-card-id="${card.id}"
-            aria-label="${letterLabel}"
+            aria-label="${ariaLabel}"
           >
-            <span class="select-none">${reveal ? card.letter : '?'}</span>
+            ${
+              reveal
+                ? card.kind === 'image'
+                  ? `<img src="${card.image}" alt="${ariaLabel}" class="h-20 w-20 select-none object-contain" />`
+                  : `<span class="select-none">${card.letter}</span>`
+                : '<span class="select-none">?</span>'
+            }
           </button>
         `;
       })
@@ -316,11 +386,14 @@ export function mountMemoryGame(root) {
       const isSelected = state.selectedDifficultyId === option.id;
       const label = t(`memoryGame.difficulty.${option.id}.label`);
       const description = t(`memoryGame.difficulty.${option.id}.subLabel`);
+      const hasEnoughArt = CARD_CATALOG.length >= option.pairs;
       const classes = [
         'flex flex-col gap-2 rounded-3xl border px-5 py-6 text-left transition-all',
         isSelected
           ? 'border-accent bg-accent/10 text-accent shadow-soft'
-          : 'border-accent/15 bg-white text-text hover:border-accent/40',
+          : hasEnoughArt
+            ? 'border-accent/15 bg-white text-text hover:border-accent/40'
+            : 'border-dashed border-accent/20 bg-white text-text/60',
       ]
         .filter(Boolean)
         .join(' ');
@@ -331,9 +404,11 @@ export function mountMemoryGame(root) {
           class="${classes}"
           data-difficulty="${option.id}"
           aria-pressed="${isSelected}"
+          ${hasEnoughArt ? '' : 'disabled aria-disabled="true"'}
         >
           <span class="text-lg font-semibold text-accent">${label}</span>
           <span class="text-sm text-text/80">${description}</span>
+          ${hasEnoughArt ? '' : `<span class="text-xs font-medium text-text/60">${t('memoryGame.difficultyUnavailable')}</span>`}
         </button>
       `;
     }).join('');

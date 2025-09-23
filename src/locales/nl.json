@@ -131,6 +131,7 @@
         "subLabel": "6 paren • 12 kaartjes"
       }
     },
+    "difficultyUnavailable": "Nog even geduld, illustraties onderweg!",
     "startButton": "Start spel",
     "mute": {
       "on": "Geluid uit",
@@ -146,6 +147,14 @@
     "playAgain": "Speel nog een keer",
     "chooseLevel": "Kies ander niveau",
     "letterLabel": "Kaartje met letter {letter}",
+    "hiddenCard": "Verborgen kaartje",
+    "cards": {
+      "kwispelNeutral": "Kwispel kijkt vrolijk",
+      "chilliSitting": "Chilli zit met een kwispelende staart",
+      "bumblebee": "Vriendelijke hommel uit Kwispels tuin",
+      "ant": "Een miertje",
+      "eetbakje": "Kwispels eetbakje met brokjes"
+    },
     "playCta": "Speel het memory-spel"
   },
   "coloringGame": {
