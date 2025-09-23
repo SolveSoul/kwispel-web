@@ -33,7 +33,7 @@ function createNavMarkup() {
     .join('');
 }
 
-function renderColoringCard(id) {
+function renderColoringCard({ id, previewUrl, pdfUrl }) {
   const title = t(`downloadsPage.items.${id}.title`);
   const description = t(`downloadsPage.items.${id}.description`);
   const tags = t(`downloadsPage.items.${id}.tags`) ?? [];
@@ -42,12 +42,54 @@ function renderColoringCard(id) {
         .map((tag) => `<span class="inline-flex items-center rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent/80">${tag}</span>`)
         .join('')
     : '';
-
-  return `
-    <article class="flex h-full flex-col gap-4 rounded-3xl border border-accent/15 bg-white p-6 shadow-soft">
+  const previewAltKey = `downloadsPage.items.${id}.previewAlt`;
+  const previewAltTranslation = t(previewAltKey);
+  const previewAlt = previewAltTranslation === previewAltKey ? title : previewAltTranslation;
+  const hasDownload = Boolean(pdfUrl);
+  const previewMarkup = previewUrl
+    ? `
+      <figure class="flex h-40 items-center justify-center overflow-hidden rounded-2xl border border-accent/15 bg-white">
+        <img src="${previewUrl}" alt="${previewAlt}" loading="lazy" class="h-full w-full object-contain" />
+      </figure>
+    `
+    : `
       <div class="flex h-40 items-center justify-center rounded-2xl border border-dashed border-accent/20 bg-muted text-accent">
         <span class="max-w-[14ch] text-center text-sm font-heading leading-snug">${t('downloadsPage.cards.placeholderAlt')}</span>
       </div>
+    `;
+  const actionsMarkup = hasDownload
+    ? `
+      <a
+        class="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white shadow-soft transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        href="${pdfUrl}"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-action="print"
+      >
+        ${t('downloadsPage.actions.print')}
+      </a>
+      <a
+        class="inline-flex items-center justify-center gap-2 rounded-full border border-accent/30 bg-white px-4 py-2 text-sm font-semibold text-accent transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        href="${pdfUrl}"
+        download
+        data-action="download"
+      >
+        ${t('downloadsPage.actions.download')}
+      </a>
+    `
+    : `
+      <button class="inline-flex items-center justify-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm font-semibold text-accent opacity-70" type="button" disabled>
+        ${t('downloadsPage.actions.print')}
+      </button>
+      <button class="inline-flex items-center justify-center gap-2 rounded-full border border-accent/30 bg-white px-4 py-2 text-sm font-semibold text-accent opacity-70" type="button" disabled>
+        ${t('downloadsPage.actions.download')}
+      </button>
+      <span class="inline-flex items-center text-xs font-medium uppercase tracking-wide text-accent/70">${t('downloadsPage.actions.comingSoon')}</span>
+    `;
+
+  return `
+    <article class="flex h-full flex-col gap-4 rounded-3xl border border-accent/15 bg-white p-6 shadow-soft">
+      ${previewMarkup}
       <div class="flex flex-col gap-3">
         <h3 class="text-2xl">${title}</h3>
         <p class="text-sm text-text/80">${description}</p>
@@ -55,14 +97,8 @@ function renderColoringCard(id) {
       <div class="flex flex-wrap gap-2" aria-label="${t('downloadsPage.cards.tagsLabel')}">
         ${tagMarkup}
       </div>
-      <div class="flex flex-wrap gap-3 pt-2">
-        <button class="inline-flex items-center justify-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm font-semibold text-accent opacity-70" type="button" disabled>
-          ${t('downloadsPage.actions.print')}
-        </button>
-        <button class="inline-flex items-center justify-center gap-2 rounded-full border border-accent/30 bg-white px-4 py-2 text-sm font-semibold text-accent opacity-70" type="button" disabled>
-          ${t('downloadsPage.actions.download')}
-        </button>
-        <span class="inline-flex items-center text-xs font-medium uppercase tracking-wide text-accent/70">${t('downloadsPage.actions.comingSoon')}</span>
+      <div class="flex flex-wrap items-center gap-3 pt-2">
+        ${actionsMarkup}
       </div>
     </article>
   `;
@@ -70,7 +106,7 @@ function renderColoringCard(id) {
 
 function render() {
   const navMarkup = createNavMarkup();
-  const cardsMarkup = getColoringPages().map(({ id }) => renderColoringCard(id)).join('');
+  const cardsMarkup = getColoringPages().map((page) => renderColoringCard(page)).join('');
   const tips = t('downloadsPage.tips.items') ?? [];
   const tipMarkup = Array.isArray(tips)
     ? tips
