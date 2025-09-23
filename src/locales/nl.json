@@ -168,6 +168,24 @@
       "heading": "Kleurpalet",
       "hint": "Tip: kleur eerst met de kwast langs de randen en vul grote vlakken daarna met de emmer."
     },
+    "templates": {
+      "heading": "Kies je kleurplaat",
+      "description": "Selecteer een scène uit Kwispels wereld en start meteen met kleuren.",
+      "selectedLabel": "Gekozen",
+      "loading": "Kleurplaat wordt klaargezet…",
+      "empty": "Nog even geduld. We werken aan nieuwe digitale kleurplaten.",
+      "items": {
+        "kwispelTongue": {
+          "title": "Kwispel steekt zijn tong uit",
+          "description": "Een speelse Kwispel die zijn tong uitsteekt en wacht tot jij hem inkleurt.",
+          "previewAlt": "Voorbeeld van de kleurplaat waarop Kwispel zijn tong uitsteekt.",
+          "tags": {
+            "ages": "Voor kleuters",
+            "details": "Grote vlakken"
+          }
+        }
+      }
+    },
     "brushSize": {
       "heading": "Kwastdikte"
     },
@@ -195,7 +213,9 @@
     },
     "status": {
       "saved": "Je kleurplaat is gedownload.",
-      "cleared": "De kleurplaat staat opnieuw leeg."
+      "cleared": "De kleurplaat staat opnieuw leeg.",
+      "templateReady": "{label} is klaar om in te kleuren.",
+      "templateError": "Oeps, deze kleurplaat konden we niet laden."
     },
     "placeholder": {
       "title": "Kwispel oefent poseren",

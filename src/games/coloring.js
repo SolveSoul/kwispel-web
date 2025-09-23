@@ -1,4 +1,5 @@
 import { t } from '../i18n.js';
+import kwispelTongueTemplate from '../assets/games/coloring/kwispel_tongue_template.svg';
 
 const DEFAULT_CANVAS_WIDTH = 960;
 const DEFAULT_CANVAS_HEIGHT = 680;
@@ -99,6 +100,20 @@ const BRUSH_SIZES = [
   { id: 'fine', size: 12, labelKey: 'coloringGame.brushSizes.fine' },
   { id: 'medium', size: 26, labelKey: 'coloringGame.brushSizes.medium' },
   { id: 'bold', size: 40, labelKey: 'coloringGame.brushSizes.bold' },
+];
+
+const DEFAULT_TEMPLATES = [
+  {
+    id: 'kwispel-tongue',
+    titleKey: 'coloringGame.templates.items.kwispelTongue.title',
+    descriptionKey: 'coloringGame.templates.items.kwispelTongue.description',
+    tags: [
+      'coloringGame.templates.items.kwispelTongue.tags.ages',
+      'coloringGame.templates.items.kwispelTongue.tags.details',
+    ],
+    assetUrl: kwispelTongueTemplate,
+    previewAltKey: 'coloringGame.templates.items.kwispelTongue.previewAlt',
+  },
 ];
 
 function hexToRgba(hex) {
@@ -328,20 +343,92 @@ function ensurePaletteScrollStyle() {
   document.head.append(style);
 }
 
-function createMarkup(state, palette) {
+function buildTemplateCardsMarkup(state, templates) {
+  if (!Array.isArray(templates) || templates.length === 0) {
+    return `<p class="rounded-2xl border border-dashed border-accent/20 bg-white/70 p-4 text-sm text-text/70">${t('coloringGame.templates.empty')}</p>`;
+  }
+
+  return templates
+    .map((template) => {
+      const isActive = state.activeTemplateId === template.id;
+      const tagsMarkup = Array.isArray(template.tags)
+        ? template.tags
+            .map((tagKey) => `<span class="inline-flex items-center rounded-full bg-accent/10 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-accent/80">${t(tagKey)}</span>`)
+            .join('')
+        : '';
+      const previewUrl = template.previewUrl ?? template.assetUrl ?? '';
+      const selectionClasses = [
+        'relative flex h-full w-full flex-col gap-3 overflow-hidden rounded-3xl border text-left transition focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-accent/60',
+        isActive ? 'border-accent bg-white shadow-soft' : 'border-accent/10 bg-white/70 hover:border-accent/30 hover:bg-white',
+      ]
+        .filter(Boolean)
+        .join(' ');
+
+      return `
+        <button
+          type="button"
+          class="${selectionClasses}"
+          data-template-id="${template.id}"
+          aria-pressed="${isActive}"
+          aria-label="${t(template.titleKey)}"
+        >
+          <span class="relative block overflow-hidden rounded-[1.75rem] border border-white/60 bg-white">
+            <img
+              src="${previewUrl}"
+              alt="${t(template.previewAltKey)}"
+              class="block aspect-[4/3] w-full bg-muted/60 object-contain"
+              loading="lazy"
+              decoding="async"
+            />
+            ${
+              isActive
+                ? `<span class="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-white shadow-soft"><i aria-hidden="true" class="fa-solid fa-palette"></i>${t('coloringGame.templates.selectedLabel')}</span>`
+                : ''
+            }
+          </span>
+          <span class="flex flex-1 flex-col gap-2 px-4 pb-4">
+            <strong class="text-base text-accent">${t(template.titleKey)}</strong>
+            <span class="text-sm text-text/70">${t(template.descriptionKey)}</span>
+            ${
+              tagsMarkup
+                ? `<span class="mt-1 flex flex-wrap gap-1 text-xs text-text/60" data-template-tags>${tagsMarkup}</span>`
+                : ''
+            }
+          </span>
+        </button>
+      `;
+    })
+    .join('');
+}
+
+function createMarkup(state, palette, templates) {
   const activeColor = palette.find((color) => color.id === state.activeColorId);
   const activeColorLabel = activeColor ? activeColor.label : '';
+  const templateCards = buildTemplateCardsMarkup(state, templates);
 
   return `
     <div class="flex flex-col gap-6" data-coloring-shell>
       <section class="flex flex-col gap-2 rounded-3xl border border-accent/15 bg-white/90 p-5 shadow-soft">
         <span class="inline-flex w-fit items-center rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">${t('coloringGame.pageEyebrow')}</span>
         <h2 class="text-2xl text-accent md:text-3xl">${t('coloringGame.pageTitle')}</h2>
+        <p class="text-sm text-text/70 md:text-base">${t('coloringGame.pageIntro')}</p>
         <p class="text-sm text-text/70 md:text-base">${t('coloringGame.instructions')}</p>
       </section>
+      <section class="flex flex-col gap-4 rounded-3xl border border-accent/10 bg-white/90 p-5 shadow-soft" data-template-picker>
+        <div class="flex flex-col gap-2">
+          <h3 class="text-lg font-semibold text-accent md:text-xl">${t('coloringGame.templates.heading')}</h3>
+          <p class="text-sm text-text/70 md:text-base">${t('coloringGame.templates.description')}</p>
+        </div>
+        <div class="grid gap-3 md:grid-cols-2" data-template-options>
+          ${templateCards}
+        </div>
+      </section>
       <section class="flex flex-col gap-4 rounded-[2.5rem] border border-accent/10 bg-muted/60 p-4 shadow-soft">
-        <div class="relative w-full overflow-hidden rounded-[2rem] border border-white/50 bg-white" data-canvas-wrapper>
-          <canvas data-coloring-canvas class="block h-auto w-full" role="img" aria-label="${t('coloringGame.canvasLabel')}"></canvas>
+        <div class="relative mx-auto w-full overflow-hidden rounded-[2rem] border border-white/50 bg-white" data-canvas-wrapper>
+          <div class="pointer-events-none absolute inset-0 z-30 hidden items-center justify-center bg-white/85 text-sm font-semibold text-accent" data-template-loading>
+            <span class="flex items-center gap-2"><i aria-hidden="true" class="fa-solid fa-sparkles"></i>${t('coloringGame.templates.loading')}</span>
+          </div>
+          <canvas data-coloring-canvas class="block h-auto max-w-full mx-auto" role="img" aria-label="${t('coloringGame.canvasLabel')}"></canvas>
           <div class="pointer-events-auto absolute left-4 top-4 z-20 flex flex-wrap items-center gap-2 rounded-3xl border border-accent/10 bg-white/95 px-3 py-2 shadow-soft backdrop-blur" data-toolbar-actions>
             <button type="button" class="relative flex h-11 w-11 items-center justify-center rounded-full border border-accent/20 bg-white text-lg text-accent transition hover:border-accent/40 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-accent/60 disabled:cursor-not-allowed disabled:opacity-40" data-action="undo" title="${t('coloringGame.actions.undo')}">
               <i aria-hidden="true" class="fa-solid fa-rotate-left"></i>
@@ -374,7 +461,7 @@ function createMarkup(state, palette) {
               <i aria-hidden="true" class="fa-solid fa-floppy-disk"></i>
               <span class="sr-only">${t('coloringGame.actions.download')}</span>
             </button>
-            <div class="ml-2 min-w-[9rem] text-xs text-text/60" aria-live="polite" data-status-region></div>
+            <div class="ml-2 flex-1 min-w-0 text-xs text-text/60" aria-live="polite" data-status-region></div>
             <div
               data-clear-hint
               class="pointer-events-none absolute left-1/2 top-full mt-2 rounded-full bg-accent px-3 py-1 text-[0.65rem] font-semibold text-white shadow-soft"
@@ -398,8 +485,8 @@ function createMarkup(state, palette) {
           <div class="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-2 rounded-3xl border border-accent/10 bg-white/95 p-3 shadow-soft backdrop-blur" data-toolbar-tools></div>
         </div>
         <div class="flex flex-col gap-1 rounded-2xl border border-dashed border-accent/20 bg-white/70 p-4 text-sm text-text/70">
-          <strong class="text-accent">${t('coloringGame.placeholder.title')}</strong>
-          <p>${t('coloringGame.placeholder.description')}</p>
+          <strong class="text-accent">${t('coloringGame.palette.heading')}</strong>
+          <p>${t('coloringGame.palette.hint')}</p>
         </div>
       </section>
     </div>
@@ -423,12 +510,26 @@ export function mountColoringGame(root, options = {}) {
 
   const palette = Array.isArray(options.palette) && options.palette.length > 0 ? options.palette : SOFT_PANTONE_PALETTE;
   const initialColorId = palette[0]?.id ?? 'cotton-candy';
+  const templates = Array.isArray(options.templates) && options.templates.length > 0 ? options.templates : DEFAULT_TEMPLATES;
+  const initialTemplateId = (() => {
+    if (!Array.isArray(templates) || templates.length === 0) {
+      return null;
+    }
+
+    const candidate = options.initialTemplateId;
+    if (candidate && templates.some((template) => template.id === candidate)) {
+      return candidate;
+    }
+
+    return templates[0].id;
+  })();
 
   const state = {
     toolId: 'brush',
     brushSizeId: 'medium',
     activeColorId: initialColorId,
     activeColor: palette.find((color) => color.id === initialColorId)?.value ?? '#f6d6de',
+    activeTemplateId: initialTemplateId,
     pointerId: null,
     isDrawing: false,
     lastPoint: null,
@@ -440,12 +541,14 @@ export function mountColoringGame(root, options = {}) {
   ensurePaletteScrollStyle();
 
   root.setAttribute('data-game', 'coloring');
-  root.innerHTML = createMarkup(state, palette);
+  root.innerHTML = createMarkup(state, palette, templates);
 
   const disposers = [];
   let statusTimeoutId = null;
   let clearHintTimeoutId = null;
 
+  const templateOptions = root.querySelector('[data-template-options]');
+  const templateLoadingOverlay = root.querySelector('[data-template-loading]');
   const canvasWrapper = root.querySelector('[data-canvas-wrapper]');
   const canvas = root.querySelector('[data-coloring-canvas]');
   const toolContainer = root.querySelector('[data-toolbar-tools]');
@@ -462,16 +565,35 @@ export function mountColoringGame(root, options = {}) {
   const clearHint = actionsContainer?.querySelector('[data-clear-hint]');
   const clearProgressRing = clearButton?.querySelector('[data-progress-ring]');
 
-  if (!canvasWrapper || !canvas || !toolContainer || !paletteContainer || !brushContainer || !actionsContainer) {
+  if (!templateOptions || !canvasWrapper || !canvas || !toolContainer || !paletteContainer || !brushContainer || !actionsContainer) {
     throw new Error('Kon de vereiste kleurplaat elementen niet bouwen.');
   }
 
-  const width = options.width ?? DEFAULT_CANVAS_WIDTH;
-  const height = options.height ?? DEFAULT_CANVAS_HEIGHT;
+  let resizeObserver = null;
+  let resizeFrame = null;
+
+  const baseWidth = options.width ?? DEFAULT_CANVAS_WIDTH;
+  const baseHeight = options.height ?? DEFAULT_CANVAS_HEIGHT;
+  const baseAspectRatio = baseWidth > 0 ? baseHeight / baseWidth : DEFAULT_CANVAS_HEIGHT / DEFAULT_CANVAS_WIDTH;
+  const baseAspectString = `${baseWidth} / ${baseHeight}`;
+  let currentAspectRatio = baseAspectRatio;
+  const maxDevicePixelRatio = typeof options.maxDevicePixelRatio === 'number' ? options.maxDevicePixelRatio : 2.5;
+  const supportsAspectRatio = typeof document !== 'undefined' &&
+    !!document.documentElement?.style &&
+    'aspectRatio' in document.documentElement.style;
+
+  let width = baseWidth;
+  let height = baseHeight;
 
   canvas.width = width;
   canvas.height = height;
   canvas.style.touchAction = 'none';
+  canvas.style.display = 'block';
+
+  if (supportsAspectRatio) {
+    canvasWrapper.style.aspectRatio = baseAspectString;
+    canvas.style.aspectRatio = baseAspectString;
+  }
 
   const displayCtx = canvas.getContext('2d');
   const paintCanvas = document.createElement('canvas');
@@ -484,18 +606,216 @@ export function mountColoringGame(root, options = {}) {
   outlineCanvas.height = height;
   const outlineCtx = outlineCanvas.getContext('2d');
 
-  let outlineSnapshot = null;
+  const canvasSection = canvasWrapper.parentElement;
+  const originalWrapperBg = canvasWrapper.style.backgroundColor;
+  const originalSectionBg = canvasSection?.style.backgroundColor ?? '';
+  const originalSectionBorder = canvasSection?.style.borderColor ?? '';
+  const originalRootBg = root.style.backgroundColor;
+  const originalBodyBg = typeof document !== 'undefined' && document.body ? document.body.style.backgroundColor : '';
+  const FULLSCREEN_BACKDROP = '#fdf8f4';
 
+  let outlineSnapshot = null;
+  let canvasCornerRadius = 0;
+
+  syncCanvasDimensions({ force: true });
+
+  function getEffectivePixelRatio() {
+    if (typeof window === 'undefined') {
+      return 1;
+    }
+
+    const ratio = window.devicePixelRatio || 1;
+    return Math.max(1, Math.min(ratio, maxDevicePixelRatio));
+  }
+
+  function resolveBorderRadiusPx(referenceWidth, referenceHeight) {
+    if (typeof window === 'undefined' || !canvasWrapper) {
+      return 0;
+    }
+
+    const styles = window.getComputedStyle(canvasWrapper);
+    const raw = styles.borderTopLeftRadius || styles.borderRadius;
+
+    if (!raw) {
+      return 0;
+    }
+
+    const token = raw.split(' ')[0];
+
+    if (token.endsWith('%')) {
+      const percent = parseFloat(token);
+      if (Number.isNaN(percent)) {
+        return 0;
+      }
+      const basis = Math.min(referenceWidth, referenceHeight);
+      return (percent / 100) * basis;
+    }
+
+    const value = parseFloat(token);
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  function drawRoundedRectPath(context, x, y, rectWidth, rectHeight, radius) {
+    const clampedRadius = Math.max(0, Math.min(radius, Math.min(rectWidth, rectHeight) / 2));
+
+    if (clampedRadius === 0) {
+      context.rect(x, y, rectWidth, rectHeight);
+      return;
+    }
+
+    const r = clampedRadius;
+    context.moveTo(x + r, y);
+    context.lineTo(x + rectWidth - r, y);
+    context.quadraticCurveTo(x + rectWidth, y, x + rectWidth, y + r);
+    context.lineTo(x + rectWidth, y + rectHeight - r);
+    context.quadraticCurveTo(x + rectWidth, y + rectHeight, x + rectWidth - r, y + rectHeight);
+    context.lineTo(x + r, y + rectHeight);
+    context.quadraticCurveTo(x, y + rectHeight, x, y + rectHeight - r);
+    context.lineTo(x, y + r);
+    context.quadraticCurveTo(x, y, x + r, y);
+  }
+
+  function syncCanvasDimensions(options = {}) {
+    const { force = false } = options;
+
+    if (!canvasWrapper) {
+      return false;
+    }
+
+    const wrapperRect = canvasWrapper.getBoundingClientRect();
+    let cssWidth = wrapperRect.width || canvasWrapper.clientWidth || baseWidth;
+
+    if (cssWidth === 0) {
+      cssWidth = baseWidth;
+    }
+
+    const targetAspect = currentAspectRatio > 0 ? currentAspectRatio : baseAspectRatio;
+
+    let availableHeight = wrapperRect.height || canvasWrapper.clientHeight || 0;
+
+    if ((!availableHeight || availableHeight === 0) && canvasWrapper.parentElement) {
+      const parentRect = canvasWrapper.parentElement.getBoundingClientRect();
+      availableHeight = parentRect.height;
+    }
+
+    if (typeof window !== 'undefined') {
+      const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+      if (viewportHeight) {
+        if (!availableHeight || availableHeight === 0) {
+          availableHeight = viewportHeight;
+        } else {
+          availableHeight = Math.min(availableHeight, viewportHeight);
+        }
+      }
+    }
+
+    if (!availableHeight || availableHeight <= 0) {
+      availableHeight = cssWidth * targetAspect;
+    }
+
+    const maxWidthFromHeight = availableHeight / targetAspect;
+    if (Number.isFinite(maxWidthFromHeight) && maxWidthFromHeight > 0 && maxWidthFromHeight < cssWidth) {
+      cssWidth = maxWidthFromHeight;
+    }
+
+    const cssHeight = Math.max(cssWidth * targetAspect, 1);
+
+    const pixelRatio = getEffectivePixelRatio();
+    const nextWidth = Math.max(Math.round(cssWidth * pixelRatio), 1);
+    const nextHeight = Math.max(Math.round(cssHeight * pixelRatio), 1);
+
+    if (!force && nextWidth === width && nextHeight === height) {
+      return false;
+    }
+
+    width = nextWidth;
+    height = nextHeight;
+
+    canvas.width = width;
+    canvas.height = height;
+    paintCanvas.width = width;
+    paintCanvas.height = height;
+    outlineCanvas.width = width;
+    outlineCanvas.height = height;
+
+    const widthStyle = `${Math.round(cssWidth)}px`;
+    const heightStyle = `${Math.round(cssHeight)}px`;
+
+    if (canvas.style.width !== widthStyle) {
+      canvas.style.width = widthStyle;
+    }
+
+    if (canvas.style.height !== heightStyle) {
+      canvas.style.height = heightStyle;
+    }
+
+    if (!supportsAspectRatio) {
+      if (canvasWrapper.style.height !== heightStyle) {
+        canvasWrapper.style.height = heightStyle;
+      }
+    } else if (canvasWrapper.style.height) {
+      canvasWrapper.style.removeProperty('height');
+    }
+
+    if (canvasWrapper.style.maxWidth !== widthStyle) {
+      canvasWrapper.style.maxWidth = widthStyle;
+    }
+
+    if (canvasWrapper.style.maxHeight !== heightStyle) {
+      canvasWrapper.style.maxHeight = heightStyle;
+    }
+
+    if (canvasWrapper.style.width) {
+      canvasWrapper.style.removeProperty('width');
+    }
+
+    const borderRadiusPx = resolveBorderRadiusPx(cssWidth, cssHeight);
+    canvasCornerRadius = Math.min(borderRadiusPx * pixelRatio, Math.min(width, height) / 2);
+
+    return true;
+  }
   drawPlaceholderGuide(outlineCtx, width, height);
   outlineSnapshot = outlineCtx.getImageData(0, 0, width, height);
 
   function composite() {
+    const strokeWidth = Math.max(width, height) * 0.004;
+    const halfStroke = strokeWidth / 2;
+    const hasCornerRadius = canvasCornerRadius > 0.5;
+
     displayCtx.save();
+
+    if (hasCornerRadius) {
+      displayCtx.beginPath();
+      drawRoundedRectPath(displayCtx, 0, 0, width, height, canvasCornerRadius);
+      displayCtx.clip();
+    }
+
     displayCtx.clearRect(0, 0, width, height);
-    displayCtx.fillStyle = '#fdf8f4';
+    displayCtx.fillStyle = '#ffffff';
     displayCtx.fillRect(0, 0, width, height);
     displayCtx.drawImage(paintCanvas, 0, 0);
     displayCtx.drawImage(outlineCanvas, 0, 0);
+    displayCtx.restore();
+
+    displayCtx.save();
+    displayCtx.lineWidth = strokeWidth;
+    displayCtx.strokeStyle = 'rgba(47, 42, 40, 0.18)';
+    displayCtx.beginPath();
+
+    if (hasCornerRadius) {
+      drawRoundedRectPath(
+        displayCtx,
+        halfStroke,
+        halfStroke,
+        width - strokeWidth,
+        height - strokeWidth,
+        Math.max(canvasCornerRadius - halfStroke, 0),
+      );
+    } else {
+      drawRoundedRectPath(displayCtx, halfStroke, halfStroke, width - strokeWidth, height - strokeWidth, 0);
+    }
+
+    displayCtx.stroke();
     displayCtx.restore();
   }
 
@@ -595,6 +915,253 @@ export function mountColoringGame(root, options = {}) {
         </button>
       `;
     }).join('');
+  }
+
+  function renderTemplates() {
+    if (!templateOptions) {
+      return;
+    }
+
+    templateOptions.innerHTML = buildTemplateCardsMarkup(state, templates);
+  }
+
+  function setTemplateLoading(isLoading) {
+    if (!templateLoadingOverlay) {
+      return;
+    }
+
+    if (isLoading) {
+      templateLoadingOverlay.classList.remove('hidden');
+      templateLoadingOverlay.classList.add('flex');
+      canvas?.setAttribute('aria-busy', 'true');
+    } else {
+      templateLoadingOverlay.classList.add('hidden');
+      templateLoadingOverlay.classList.remove('flex');
+      canvas?.removeAttribute('aria-busy');
+    }
+  }
+
+  let activeTemplateRequestId = 0;
+
+  function resetPaintingHistory() {
+    state.history = [];
+    state.historyIndex = -1;
+    captureSnapshot();
+  }
+
+  function loadActiveTemplate(options = {}) {
+    const { announce = true, showLoading = true, onReady, playSound = true } = options;
+
+    if (!state.activeTemplateId) {
+      currentAspectRatio = baseAspectRatio;
+      if (supportsAspectRatio) {
+        canvasWrapper.style.aspectRatio = baseAspectString;
+        canvas.style.aspectRatio = baseAspectString;
+        canvasWrapper.style.removeProperty('height');
+      }
+      syncCanvasDimensions({ force: true });
+      outlineCtx.clearRect(0, 0, width, height);
+      drawPlaceholderGuide(outlineCtx, width, height);
+      outlineSnapshot = outlineCtx.getImageData(0, 0, width, height);
+      paintCtx.clearRect(0, 0, width, height);
+      composite();
+      resetPaintingHistory();
+      setTemplateLoading(false);
+      if (typeof onReady === 'function') {
+        onReady({ width, height, template: null });
+      }
+      return;
+    }
+
+    const template = templates.find((item) => item.id === state.activeTemplateId);
+
+    if (!template || !template.assetUrl) {
+      return;
+    }
+
+    const requestId = ++activeTemplateRequestId;
+
+    setTemplateLoading(showLoading);
+
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.decoding = 'async';
+
+    image.onload = () => {
+      if (requestId !== activeTemplateRequestId) {
+        return;
+      }
+
+      const naturalWidth = image.naturalWidth || image.width;
+      const naturalHeight = image.naturalHeight || image.height;
+
+      if (naturalWidth > 0 && naturalHeight > 0) {
+        const aspect = naturalHeight / naturalWidth;
+        if (Number.isFinite(aspect) && aspect > 0) {
+          currentAspectRatio = aspect;
+          if (supportsAspectRatio) {
+            const aspectString = `${naturalWidth} / ${naturalHeight}`;
+            canvasWrapper.style.aspectRatio = aspectString;
+            canvas.style.aspectRatio = aspectString;
+            canvasWrapper.style.removeProperty('height');
+          }
+        }
+      } else {
+        currentAspectRatio = baseAspectRatio;
+        if (supportsAspectRatio) {
+          canvasWrapper.style.aspectRatio = baseAspectString;
+          canvas.style.aspectRatio = baseAspectString;
+          canvasWrapper.style.removeProperty('height');
+        }
+      }
+
+      syncCanvasDimensions({ force: true });
+
+      outlineCtx.clearRect(0, 0, width, height);
+
+      if (naturalWidth > 0 && naturalHeight > 0) {
+        const scale = Math.min(width / naturalWidth, height / naturalHeight);
+        const drawWidth = naturalWidth * scale;
+        const drawHeight = naturalHeight * scale;
+        const offsetX = (width - drawWidth) / 2;
+        const offsetY = (height - drawHeight) / 2;
+        outlineCtx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+      } else {
+        outlineCtx.drawImage(image, 0, 0, width, height);
+      }
+
+      outlineSnapshot = outlineCtx.getImageData(0, 0, width, height);
+      paintCtx.clearRect(0, 0, width, height);
+      composite();
+      resetPaintingHistory();
+      setTemplateLoading(false);
+
+      if (announce) {
+        displayStatus(t('coloringGame.status.templateReady').replace('{label}', t(template.titleKey)));
+      }
+
+      if (playSound) {
+        playUiSound('action');
+      }
+
+      if (typeof onReady === 'function') {
+        onReady({ width, height, template });
+      }
+    };
+
+    image.onerror = () => {
+      if (requestId !== activeTemplateRequestId) {
+        return;
+      }
+
+      currentAspectRatio = baseAspectRatio;
+      if (supportsAspectRatio) {
+        canvasWrapper.style.aspectRatio = baseAspectString;
+        canvas.style.aspectRatio = baseAspectString;
+        canvasWrapper.style.removeProperty('height');
+      }
+      syncCanvasDimensions({ force: true });
+
+      outlineCtx.clearRect(0, 0, width, height);
+      drawPlaceholderGuide(outlineCtx, width, height);
+      outlineSnapshot = outlineCtx.getImageData(0, 0, width, height);
+      paintCtx.clearRect(0, 0, width, height);
+      composite();
+      resetPaintingHistory();
+      setTemplateLoading(false);
+
+      if (announce) {
+        displayStatus(t('coloringGame.status.templateError'));
+      }
+
+      if (typeof onReady === 'function') {
+        onReady({ width, height, template: null, error: true });
+      }
+    };
+
+    image.src = template.assetUrl;
+  }
+
+  function setActiveTemplate(templateId, options = {}) {
+    if (!templateId || state.activeTemplateId === templateId) {
+      return;
+    }
+
+    const exists = templates.some((template) => template.id === templateId);
+
+    if (!exists) {
+      return;
+    }
+
+    state.activeTemplateId = templateId;
+    renderTemplates();
+    loadActiveTemplate(options);
+  }
+
+  function resizeCanvasForDisplay(options = {}) {
+    const { force = false, showLoading = false } = options;
+
+    const hadPainting = state.historyIndex > 0;
+    let paintSnapshot = null;
+
+    if (hadPainting) {
+      paintSnapshot = document.createElement('canvas');
+      paintSnapshot.width = width;
+      paintSnapshot.height = height;
+      const snapshotCtx = paintSnapshot.getContext('2d');
+      snapshotCtx.drawImage(paintCanvas, 0, 0);
+    }
+
+    const changed = syncCanvasDimensions({ force });
+
+    if (!changed) {
+      paintSnapshot = null;
+      return false;
+    }
+
+    loadActiveTemplate({
+      announce: false,
+      showLoading,
+      playSound: false,
+      onReady: () => {
+        if (paintSnapshot) {
+          paintCtx.save();
+          paintCtx.drawImage(
+            paintSnapshot,
+            0,
+            0,
+            paintSnapshot.width,
+            paintSnapshot.height,
+            0,
+            0,
+            width,
+            height,
+          );
+          paintCtx.restore();
+          composite();
+          captureSnapshot();
+          paintSnapshot = null;
+        }
+      },
+    });
+
+    return true;
+  }
+
+  function handleTemplateClick(event) {
+    const target = event.target.closest('[data-template-id]');
+
+    if (!target) {
+      return;
+    }
+
+    const templateId = target.getAttribute('data-template-id');
+
+    if (!templateId) {
+      return;
+    }
+
+    setActiveTemplate(templateId);
   }
 
   function updateHistoryControls() {
@@ -1031,6 +1598,54 @@ export function mountColoringGame(root, options = {}) {
     return Promise.reject(new Error('Fullscreen API not supported'));
   }
 
+  function applyFullscreenStyles(isActive) {
+    if (isActive) {
+      canvasWrapper.style.backgroundColor = FULLSCREEN_BACKDROP;
+      if (canvasSection) {
+        canvasSection.style.backgroundColor = FULLSCREEN_BACKDROP;
+        canvasSection.style.borderColor = 'rgba(47, 42, 40, 0.08)';
+      }
+      root.style.backgroundColor = FULLSCREEN_BACKDROP;
+      if (typeof document !== 'undefined' && document.body) {
+        document.body.style.backgroundColor = FULLSCREEN_BACKDROP;
+      }
+    } else {
+      if (originalWrapperBg) {
+        canvasWrapper.style.backgroundColor = originalWrapperBg;
+      } else {
+        canvasWrapper.style.removeProperty('background-color');
+      }
+
+      if (canvasSection) {
+        if (originalSectionBg) {
+          canvasSection.style.backgroundColor = originalSectionBg;
+        } else {
+          canvasSection.style.removeProperty('background-color');
+        }
+
+        if (originalSectionBorder) {
+          canvasSection.style.borderColor = originalSectionBorder;
+        } else {
+          canvasSection.style.removeProperty('border-color');
+        }
+      }
+
+      if (originalRootBg) {
+        root.style.backgroundColor = originalRootBg;
+      } else {
+        root.style.removeProperty('background-color');
+      }
+
+      if (typeof document !== 'undefined' && document.body) {
+        if (originalBodyBg) {
+          document.body.style.backgroundColor = originalBodyBg;
+        } else {
+          document.body.style.removeProperty('background-color');
+        }
+      }
+    }
+  }
+
   function updateFullscreenButtons() {
     const isActive = isFullscreenActive();
     const label = isActive ? t('coloringGame.actions.exitFullscreen') : t('coloringGame.actions.fullscreen');
@@ -1050,6 +1665,8 @@ export function mountColoringGame(root, options = {}) {
     if (canvasWrapper) {
       canvasWrapper.classList.toggle('is-fullscreen', isActive);
     }
+
+    applyFullscreenStyles(isActive);
   }
 
   function toggleFullscreen() {
@@ -1066,15 +1683,49 @@ export function mountColoringGame(root, options = {}) {
 
   function handleFullscreenChange() {
     updateFullscreenButtons();
+    resizeCanvasForDisplay({ force: true });
   }
 
   renderTools();
   renderPalette();
   renderBrushSizes();
+  renderTemplates();
   updateActiveColorLabel();
 
   composite();
-  captureSnapshot();
+  if (state.activeTemplateId) {
+    resizeCanvasForDisplay({ force: true, showLoading: true });
+  } else {
+    captureSnapshot();
+  }
+
+  applyFullscreenStyles(isFullscreenActive());
+
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      if (resizeFrame !== null) {
+        window.cancelAnimationFrame(resizeFrame);
+      }
+
+      resizeFrame = window.requestAnimationFrame(() => {
+        resizeFrame = null;
+        resizeCanvasForDisplay();
+      });
+    });
+
+    resizeObserver.observe(canvasWrapper);
+  } else if (typeof window !== 'undefined') {
+    addListener(window, 'resize', () => {
+      if (resizeFrame !== null) {
+        window.cancelAnimationFrame(resizeFrame);
+      }
+
+      resizeFrame = window.requestAnimationFrame(() => {
+        resizeFrame = null;
+        resizeCanvasForDisplay();
+      });
+    }, false, disposers);
+  }
 
   function handleToolClick(event) {
     const button = event.target.closest('[data-tool]');
@@ -1261,6 +1912,7 @@ export function mountColoringGame(root, options = {}) {
     }
   }
 
+  addListener(templateOptions, 'click', handleTemplateClick, false, disposers);
   addListener(toolContainer, 'click', handleToolClick, false, disposers);
   addListener(paletteContainer, 'click', handlePaletteClick, false, disposers);
   addListener(brushContainer, 'click', handleBrushSizeClick, false, disposers);
@@ -1311,6 +1963,18 @@ export function mountColoringGame(root, options = {}) {
       if (clearHoldState.resetTimeoutId !== null) {
         window.clearTimeout(clearHoldState.resetTimeoutId);
       }
+
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+        resizeObserver = null;
+      }
+
+      if (resizeFrame !== null) {
+        window.cancelAnimationFrame(resizeFrame);
+        resizeFrame = null;
+      }
+
+      applyFullscreenStyles(false);
 
       hideClearHint();
 
