@@ -20,44 +20,46 @@ Launch a kid-friendly promotional website for the Flemish children’s IP “Kwi
 - **Localization**: Flemish default content with groundwork for future translations.
 - **Tech stack**: Vite + vanilla JS modules with Tailwind CSS utility layer, static output compatible with GitHub Pages.
 
-## Deliverables
-1. Vite project scaffold configured for static deployment.
-2. Landing page (`index.html`) with hero, features, book highlight, testimonials/CTA, footer.
-3. Games page detailing memory, puzzles, coloring activity (with placeholders for game modules).
-4. Downloads page offering coloring pages (placeholder links) and printing tips.
-5. Shared layout components (header/nav, footer) and Tailwind-driven global styles.
-6. Translation-ready content structure (e.g., JSON/JS resources, language toggle scaffolding).
-7. Responsive styling covering common breakpoints (mobile, tablet, desktop).
-8. Documentation for build/deploy workflow (README updates).
+## Progress Checklist
+
+### Deliverables Status
+- [x] Vite project scaffold configured for static deployment.
+- [x] Landing page (`index.html`) with hero, features, book highlight, testimonials/CTA, footer.
+- [x] Games page detailing memory, puzzles, coloring activity (with placeholders for game modules).
+- [x] Downloads page offering coloring pages (placeholder links) and printing tips.
+- [x] Shared layout components (header/nav, footer) and Tailwind-driven global styles.
+- [x] Translation-ready content structure (e.g., JSON/JS resources, language toggle scaffolding).
+- [x] Responsive styling covering common breakpoints (mobile, tablet, desktop).
+- [x] Documentation for build/deploy workflow (README updates).
 
 ## Milestones & Tasks
 ### Milestone 1: Project Setup
-- Scaffold Vite vanilla project with ES module structure.
-- Configure fonts (Google Fonts preload) and Tailwind theme tokens (colors, typography scale).
-- Establish layout shell (header, footer, responsive grid).
-- Implement lightweight localization infrastructure (content resource files, helper utilities) with Flemish default copy.
+- [x] Scaffold Vite vanilla project with ES module structure.
+- [x] Configure fonts (Google Fonts preload) and Tailwind theme tokens (colors, typography scale).
+- [x] Establish layout shell (header, footer, responsive grid).
+- [x] Implement lightweight localization infrastructure (content resource files, helper utilities) with Flemish default copy.
 
 ### Milestone 2: Landing Page Experience
-- Create hero section with Kwispel intro text and CTA buttons.
-- Add book showcase section with feature highlights and purchase CTA.
-- Build characters/friends teaser section introducing Chilli and others.
-- Implement testimonials or parent reassurance section (placeholder content).
+- [x] Create hero section with Kwispel intro text and CTA buttons.
+- [x] Add book showcase section with feature highlights and purchase CTA.
+- [x] Build characters/friends teaser section introducing Chilli and others.
+- [x] Implement testimonials or parent reassurance section (placeholder content).
 
 ### Milestone 3: Games Hub
-- Build games overview page with cards for Memory, Puzzles, Coloring.
-- Add CTA buttons linking to respective game experiences or coming soon notes.
-- Prepare JS modules scaffolds for future interactive mini-games.
+- [x] Build games overview page with cards for Memory, Puzzles, Coloring.
+- [x] Add CTA buttons linking to respective game experiences or coming soon notes.
+- [x] Prepare JS modules scaffolds for future interactive mini-games.
 
 ### Milestone 4: Coloring Downloads
-- Create downloads page with list of coloring PDFs (placeholder links).
-- Include instructions for printing and usage tips for guardians.
+- [x] Create downloads page with list of coloring PDFs (placeholder links).
+- [x] Include instructions for printing and usage tips for guardians.
 
 ### Milestone 5: Polish & Deployment
-- Add animations/micro-interactions appropriate for children (e.g., hover wiggles, gentle transitions).
-- Ensure navigation works on mobile (hamburger menu) and desktop.
-- Run responsive checks, accessibility pass (contrast, focus states, alt text placeholders).
-- Wire up language switcher scaffolding (UI + fallback when other languages unavailable).
-- Document build (`npm run build`) and deployment workflow for GitHub Pages.
+- [ ] Expand animations/micro-interactions appropriate for children (hover wiggles, gentle transitions across CTAs/cards).
+- [ ] Ensure navigation works on mobile (hamburger menu) and desktop through final QA.
+- [ ] Run responsive checks, accessibility pass (contrast, focus states, alt text placeholders).
+- [x] Wire up language switcher scaffolding (UI + fallback when other languages unavailable).
+- [x] Document build (`npm run build`) and deployment workflow for GitHub Pages.
 
 ## Risks & Considerations
 - **Content creation**: need Flemish copy; plan placeholders with TODO markers until final text delivered.
@@ -70,3 +72,7 @@ Launch a kid-friendly promotional website for the Flemish children’s IP “Kwi
 - Navigation remains intuitive for guardians and accessible for screen readers.
 - Build outputs static assets suitable for GitHub Pages without extra server requirements.
 - Stakeholders sign off on visual style and readiness for future game expansions.
+
+## Ideas & Explorations
+- Evaluate expanding the downloads offering with a 3D print corner (e.g., seasonal ornaments). Consider whether to generalise `Kleurplaten` into a broader `Downloads` hub or to present 3D models as a separate section to avoid overwhelming parents.
+- Add an optional custom difficulty selector for the memory game aimed at guardians/kids seeking more challenge. Hide it behind an "advanced" affordance so the default one-click age-appropriate options stay front and centre.
