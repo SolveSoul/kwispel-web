@@ -176,7 +176,10 @@
       "undo": "Stap terug",
       "redo": "Stap vooruit",
       "clear": "Begin opnieuw",
-      "download": "Download als PNG"
+      "download": "Download als PNG",
+      "clearHoldHint": "Hou ingedrukt om opnieuw te beginnen",
+      "fullscreen": "Volledig scherm",
+      "exitFullscreen": "Sluit volledig scherm"
     },
     "aria": {
       "paletteColor": "Kleur: {label}"
