@@ -2,7 +2,7 @@
   "nav": {
     "home": "Start",
     "games": "Spelletjes",
-    "downloads": "Kleurplaten",
+    "downloads": "Kleurplaten & Knutselpret",
     "about": "Over Kwispel",
     "language": "Taal"
   },
@@ -147,22 +147,22 @@
     "playCta": "Speel het memory-spel"
   },
   "downloads": {
-    "heading": "Download kleurplaten",
-    "description": "Print vrolijke kleurplaten van Kwispel en zijn vriendjes voor urenlang kleurplezier.",
-    "cta": "Bekijk kleurplaten",
-    "printingTips": "Tip: print op dikker papier voor minder doordrukken."
+    "heading": "Kleurplaten & Knutselpret",
+    "description": "Print vrolijke kleurplaten en ontdek binnenkort extra knutselideeën zoals 3D-decoraties voor thuis.",
+    "cta": "Ontdek knutselpret",
+    "printingTips": "Tip: leg potloden, stickers en (straks) je 3D-printjes klaar voor extra speelplezier."
   },
   "downloadsPage": {
     "hero": {
-      "eyebrow": "Kleurplezier voor thuis",
-      "heading": "Download en print Kwispel kleurplaten",
-      "intro": "We verzamelen kleurrijke avonturen van Kwispel in handige PDF's. Kies een ontwerp, print het uit en maak er samen een rustig knutselmoment van.",
+      "eyebrow": "Creatief met Kwispel",
+      "heading": "Kleurplaten & Knutselpret",
+      "intro": "Hier bundelen we printable kleurplaten en binnenkort ook andere maak-ideeën zoals seizoensgebonden 3D-printdecoraties.",
       "cta": "Terug naar de startpagina"
     },
     "overview": {
-      "heading": "Kleurplaten in aantocht",
-      "description": "De definitieve bestanden krijgen momenteel de laatste illustratie-touch. Ondertussen tonen we alvast wat er binnenkort beschikbaar is.",
-      "note": "PDF-links verschijnen hier zodra ze worden opgeladen."
+      "heading": "Wat je hier kunt vinden",
+      "description": "We starten met klassieke kleurplaten en voegen stap voor stap nieuwe knutselprojecten toe, van printables tot 3D-modelletjes.",
+      "note": "Links naar PDF's of 3D-bestanden verschijnen hier zodra ze klaarstaan."
     },
     "actions": {
       "print": "Print PDF",
@@ -170,7 +170,7 @@
       "comingSoon": "Binnenkort beschikbaar"
     },
     "cards": {
-      "placeholderAlt": "Voorbeeld van de kleurplaat",
+      "placeholderAlt": "Voorbeeld van de knutsel",
       "tagsLabel": "Bevat"
     },
     "items": {
@@ -191,11 +191,11 @@
       }
     },
     "tips": {
-      "heading": "Printtips",
+      "heading": "Tips voor een knutselmoment",
       "items": [
         "Gebruik instellingen 'ware grootte' of '100%' zodat alle details mooi blijven.",
-        "Print op iets dikker A4-papier (120 g/m²) om doordrukken te vermijden.",
-        "Laat de kleurplaten eerst even drogen als je met stiften werkt."
+        "Voor 3D-prints: noteer filamentkleur en printduur zodat je kind weet wat er gebeurt.",
+        "Print op iets dikker A4-papier (120 g/m²) om doordrukken te vermijden."
       ]
     }
   },

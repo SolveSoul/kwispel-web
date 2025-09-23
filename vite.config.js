@@ -6,6 +6,7 @@ const rootDir = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   base: './',
+  publicDir: 'src/assets/static',
   build: {
     rollupOptions: {
       input: {

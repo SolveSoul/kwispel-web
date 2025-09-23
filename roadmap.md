@@ -58,6 +58,8 @@ Launch a kid-friendly promotional website for the Flemish children’s IP “Kwi
 - [ ] Expand animations/micro-interactions appropriate for children (hover wiggles, gentle transitions across CTAs/cards).
 - [ ] Ensure navigation works on mobile (hamburger menu) and desktop through final QA.
 - [ ] Run responsive checks, accessibility pass (contrast, focus states, alt text placeholders).
+- [x] Add favicon so the brand shows up in browser tabs and share previews.
+- [ ] Replace placeholder art with actual imagery/illustrations.
 - [x] Wire up language switcher scaffolding (UI + fallback when other languages unavailable).
 - [x] Document build (`npm run build`) and deployment workflow for GitHub Pages.
 
