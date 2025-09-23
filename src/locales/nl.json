@@ -56,7 +56,8 @@
     },
     "coloring": {
       "title": "Kleuren",
-      "description": "Pak je potloden en geef Kwispel vrolijke kleuren."
+      "description": "Pak je potloden en geef Kwispel vrolijke kleuren.",
+      "cta": "Kleur online"
     },
     "comingSoon": "Binnenkort beschikbaar"
   },
@@ -90,12 +91,13 @@
         ]
       },
       "coloring": {
-        "status": "Bijna klaar",
+        "status": "Speelbaar prototype",
         "bullets": [
-          "Interactieve kleurplaat met grote vlakken",
-          "Optie om favoriete kleuren op te slaan",
-          "Extra patronen geïnspireerd op Kwispels wereld"
-        ]
+          "Digitale kleurplaat met zachte Pantone tinten",
+          "Kwast, gom en vul-emmer voor snelle kleurwissels",
+          "Download je creatie als afbeelding"
+        ],
+        "cta": "Probeer de digitale kleurplaat"
       }
     },
     "availabilityNote": "Volg onze sociale media om te weten wanneer de mini-games live gaan.",
@@ -145,6 +147,48 @@
     "chooseLevel": "Kies ander niveau",
     "letterLabel": "Kaartje met letter {letter}",
     "playCta": "Speel het memory-spel"
+  },
+  "coloringGame": {
+    "pageEyebrow": "Kwispel spelletje",
+    "pageTitle": "Digitale kleurplaat",
+    "pageIntro": "Maak er een rustig kleurmoment van. De zachte Pantone-tinten passen bij Kwispels wereld en zijn makkelijk te combineren.",
+    "instructions": "Kies een zacht tintje, selecteer een kwast of vul-emmer en kleur Kwispel in met rustige bewegingen.",
+    "canvasLabel": "Interactieve kleurplaat van Kwispel",
+    "activeColorLabel": "Actieve kleur: {label}",
+    "palette": {
+      "heading": "Kleurpalet",
+      "hint": "Tip: kleur eerst met de kwast langs de randen en vul grote vlakken daarna met de emmer."
+    },
+    "brushSize": {
+      "heading": "Kwastdikte"
+    },
+    "tools": {
+      "brush": "Kwast",
+      "bucket": "Vul-emmer",
+      "eraser": "Gom"
+    },
+    "brushSizes": {
+      "fine": "Fijne lijn",
+      "medium": "Normale streek",
+      "bold": "Dikke streek"
+    },
+    "actions": {
+      "undo": "Stap terug",
+      "redo": "Stap vooruit",
+      "clear": "Begin opnieuw",
+      "download": "Download als PNG"
+    },
+    "aria": {
+      "paletteColor": "Kleur: {label}"
+    },
+    "status": {
+      "saved": "Je kleurplaat is gedownload.",
+      "cleared": "De kleurplaat staat opnieuw leeg."
+    },
+    "placeholder": {
+      "title": "Kwispel oefent poseren",
+      "description": "Dit is een tijdelijke illustratie. Binnenkort vervangen we dit door een echte scène uit Kwispels wereld."
+    }
   },
   "downloads": {
     "heading": "Kleurplaten & Knutselpret",

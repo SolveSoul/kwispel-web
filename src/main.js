@@ -109,10 +109,12 @@ function render() {
             <div class="grid gap-6 md:grid-cols-3">
               ${getActivities()
                 .map(({ id }) => {
-                  const isMemory = id === 'memory';
-                  const actionMarkup = isMemory
-                    ? `<a class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent transition" data-cta="secondary" href="./memory.html">${t('games.memory.cta')}<span aria-hidden="true">→</span></a>`
-                    : `<span class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent">${t('games.comingSoon')}<span aria-hidden="true">→</span></span>`;
+                  const playableIds = new Set(['memory', 'coloring']);
+                  const isPlayable = playableIds.has(id);
+                  const cta = t(`games.${id}.cta`);
+                  const actionMarkup = isPlayable && typeof cta === 'string' && !cta.startsWith('gamesPage.')
+                    ? `<a class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent transition" data-cta="secondary" href="./${id}.html">${cta}<span aria-hidden="true">→</span></a>`
+                    : `<span class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent/80">${t('games.comingSoon')}</span>`;
 
                   return `
                     <article class="flex h-full flex-col gap-4 rounded-3xl bg-white p-6 shadow-soft">

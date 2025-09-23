@@ -13,6 +13,7 @@ export default defineConfig({
         main: resolve(rootDir, 'index.html'),
         games: resolve(rootDir, 'games.html'),
         memory: resolve(rootDir, 'memory.html'),
+        coloring: resolve(rootDir, 'coloring.html'),
         downloads: resolve(rootDir, 'downloads.html'),
       },
     },

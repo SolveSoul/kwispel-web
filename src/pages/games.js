@@ -50,6 +50,12 @@ function renderActivityDetails(id) {
         )
         .join('')
     : '';
+  const playableIds = new Set(['memory', 'coloring']);
+  const linkHref = playableIds.has(id) ? `./${id}.html` : null;
+  const isCtaString = typeof cta === 'string' && !cta.startsWith('gamesPage.');
+  const actionMarkup = linkHref && isCtaString
+    ? `<a class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent transition" data-cta="secondary" href="${linkHref}">${cta}<span aria-hidden="true">→</span></a>`
+    : `<p class="text-sm font-medium text-accent/80">${t('games.comingSoon')}</p>`;
 
   return `
     <article class="flex h-full flex-col gap-5 rounded-3xl border border-accent/15 bg-white p-6 shadow-soft">
@@ -61,11 +67,7 @@ function renderActivityDetails(id) {
       <ul class="flex flex-col gap-2 text-sm text-text/80">
         ${bulletMarkup}
       </ul>
-      ${
-        id === 'memory' && typeof cta === 'string' && !cta.startsWith('gamesPage.')
-          ? `<a class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent transition" data-cta="secondary" href="./memory.html">${cta}<span aria-hidden="true">→</span></a>`
-          : `<p class="text-sm font-medium text-accent/80">${t('games.comingSoon')}</p>`
-      }
+      ${actionMarkup}
     </article>
   `;
 }
