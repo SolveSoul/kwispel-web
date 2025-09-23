@@ -350,8 +350,9 @@ export function mountMemoryGame(root) {
         <div>
           <button
             type="button"
-            class="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
+            class="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition disabled:opacity-60 disabled:cursor-not-allowed"
             data-action="begin"
+            data-cta="primary"
             ${state.selectedDifficultyId ? '' : 'disabled'}
           >
             ${t('memoryGame.startButton')}
@@ -395,10 +396,10 @@ export function mountMemoryGame(root) {
         <h3 class="text-2xl md:text-3xl">${t('memoryGame.finishedTitle')}</h3>
         <p class="text-sm md:text-base text-text/80">${message}</p>
         <div class="flex flex-wrap justify-center gap-3">
-          <button type="button" class="rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition hover:-translate-y-0.5" data-action="play-again">
+          <button type="button" class="rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition" data-action="play-again" data-cta="primary">
             ${t('memoryGame.playAgain')}
           </button>
-          <button type="button" class="rounded-full border border-accent/20 bg-white px-6 py-3 text-base font-semibold text-accent transition hover:-translate-y-0.5" data-action="choose-level">
+          <button type="button" class="rounded-full border border-accent/20 bg-white px-6 py-3 text-base font-semibold text-accent transition" data-action="choose-level" data-cta="secondary">
             ${t('memoryGame.chooseLevel')}
           </button>
         </div>
@@ -408,7 +409,9 @@ export function mountMemoryGame(root) {
 
   function render() {
     const muteLabel = state.isMuted ? t('memoryGame.mute.off') : t('memoryGame.mute.on');
-    const muteIcon = state.isMuted ? '🔇' : '🔊';
+    const muteIcon = state.isMuted
+      ? '<i class="fa-solid fa-volume-xmark" aria-hidden="true"></i>'
+      : '<i class="fa-solid fa-volume-high" aria-hidden="true"></i>';
 
     const introMarkup = state.stage === 'intro' ? renderIntro() : '';
     const hudMarkup = renderHud();
@@ -421,7 +424,7 @@ export function mountMemoryGame(root) {
           <p class="text-sm md:text-base text-text/80">${t('memoryGame.instructions')}</p>
           <button
             type="button"
-            class="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-medium text-accent transition hover:-translate-y-0.5"
+            class="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-medium text-accent transition"
             data-action="toggle-mute"
             aria-pressed="${state.isMuted}"
           >

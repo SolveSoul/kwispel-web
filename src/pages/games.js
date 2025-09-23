@@ -63,7 +63,7 @@ function renderActivityDetails(id) {
       </ul>
       ${
         id === 'memory' && typeof cta === 'string' && !cta.startsWith('gamesPage.')
-          ? `<a class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent" href="./memory.html">${cta}<span aria-hidden="true">→</span></a>`
+          ? `<a class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent transition" data-cta="secondary" href="./memory.html">${cta}<span aria-hidden="true">→</span></a>`
           : `<p class="text-sm font-medium text-accent/80">${t('games.comingSoon')}</p>`
       }
     </article>
@@ -104,7 +104,7 @@ function render() {
               <h1 class="text-4xl leading-tight md:text-5xl">${t('gamesPage.hero.heading')}</h1>
               <p class="text-lg text-text/80 md:text-xl">${t('gamesPage.hero.intro')}</p>
               <div class="flex flex-wrap gap-4">
-                <a class="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition hover:-translate-y-0.5" href="./index.html">
+                <a class="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition" data-cta="primary" href="./index.html">
                   ${t('gamesPage.hero.cta')}
                 </a>
               </div>

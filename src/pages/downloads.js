@@ -102,7 +102,7 @@ function render() {
               <h1 class="text-4xl leading-tight md:text-5xl">${t('downloadsPage.hero.heading')}</h1>
               <p class="text-lg text-text/80 md:text-xl">${t('downloadsPage.hero.intro')}</p>
               <div class="flex flex-wrap gap-4">
-                <a class="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition hover:-translate-y-0.5" href="./index.html">
+                <a class="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition" data-cta="primary" href="./index.html">
                   ${t('downloadsPage.hero.cta')}
                 </a>
               </div>

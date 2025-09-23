@@ -42,10 +42,10 @@ function render() {
               <h1 class="text-4xl leading-tight md:text-5xl">${t('hero.title')}</h1>
               <p class="text-lg text-text/80 md:text-xl">${t('hero.subtitle')}</p>
               <div class="flex flex-wrap gap-4">
-                <a class="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition hover:-translate-y-0.5" href="#book">
+                <a class="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition" data-cta="primary" href="#book">
                   ${t('hero.ctaPrimary')}
                 </a>
-                <a class="inline-flex items-center justify-center rounded-full border border-accent/30 bg-white px-6 py-3 text-base font-semibold text-accent transition hover:-translate-y-0.5" href="#games">
+                <a class="inline-flex items-center justify-center rounded-full border border-accent/30 bg-white px-6 py-3 text-base font-semibold text-accent transition" data-cta="secondary" href="#games">
                   ${t('hero.ctaSecondary')}
                 </a>
               </div>
@@ -65,7 +65,7 @@ function render() {
                   .map((feature) => `<li class="flex items-start gap-3"><span aria-hidden="true">✨</span><span>${feature}</span></li>`)
                   .join('')}
               </ul>
-              <a class="mt-4 inline-flex w-fit items-center justify-center rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition hover:-translate-y-0.5" href="#contact">
+              <a class="mt-4 inline-flex w-fit items-center justify-center rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition" data-cta="primary" href="#contact">
                 ${t('book.cta')}
               </a>
             </div>
@@ -79,7 +79,7 @@ function render() {
             <div class="flex flex-col gap-4">
               <h2 class="text-3xl">${t('characters.heading')}</h2>
               <p class="text-base text-text/80 md:text-lg">${t('characters.intro')}</p>
-              <a class="inline-flex w-fit items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition hover:-translate-y-0.5" href="#games">
+              <a class="inline-flex w-fit items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition" data-cta="primary" href="#games">
                 ${t('characters.cta')}
               </a>
             </div>
@@ -111,7 +111,7 @@ function render() {
                 .map(({ id }) => {
                   const isMemory = id === 'memory';
                   const actionMarkup = isMemory
-                    ? `<a class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent" href="./memory.html">${t('games.memory.cta')}<span aria-hidden="true">→</span></a>`
+                    ? `<a class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent transition" data-cta="secondary" href="./memory.html">${t('games.memory.cta')}<span aria-hidden="true">→</span></a>`
                     : `<span class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-accent">${t('games.comingSoon')}<span aria-hidden="true">→</span></span>`;
 
                   return `
@@ -133,7 +133,7 @@ function render() {
             <div class="flex flex-col gap-4">
               <h2 class="text-3xl">${t('downloads.heading')}</h2>
               <p class="text-base text-text/80 md:text-lg">${t('downloads.description')}</p>
-              <a class="inline-flex w-fit items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition hover:-translate-y-0.5" href="./downloads.html">
+              <a class="inline-flex w-fit items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-base font-semibold text-white shadow-soft transition" data-cta="primary" href="./downloads.html">
                 ${t('downloads.cta')}
               </a>
               <p class="text-sm text-text/70">${t('downloads.printingTips')}</p>

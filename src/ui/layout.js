@@ -12,7 +12,7 @@ export function renderLanguageOptions() {
         disabled
         aria-disabled="true"
       >
-        <span aria-hidden="true">🌍</span>
+        <i class="fa-solid fa-globe" aria-hidden="true"></i>
         ${t('nav.language')}
       </button>
     `;
@@ -33,7 +33,12 @@ export function renderLanguageOptions() {
     )
     .join('');
 
-  return `<div class="flex flex-wrap items-center gap-2" role="group" aria-label="${t('nav.language')}">${buttons}</div>`;
+  return `
+    <div class="flex flex-wrap items-center gap-2" role="group" aria-label="${t('nav.language')}">
+      <span class="text-accent" aria-hidden="true"><i class="fa-solid fa-globe"></i></span>
+      ${buttons}
+    </div>
+  `;
 }
 
 export function renderFooter() {
@@ -82,13 +87,9 @@ export function renderHeader(navItemsMarkup) {
             data-open-label="${t('layout.openMenu')}"
             data-close-label="${t('layout.closeMenu')}"
           >
-            <span class="sr-only" data-mobile-nav-toggle-label>${t('layout.openMenu')}</span>
-            <svg data-mobile-nav-icon="open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-6 w-6">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7h16M4 12h16M4 17h16" />
-            </svg>
-            <svg data-mobile-nav-icon="close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="hidden h-6 w-6">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 6l12 12M18 6l-12 12" />
-            </svg>
+            <span class="visually-hidden" data-mobile-nav-toggle-label>${t('layout.openMenu')}</span>
+            <i data-mobile-nav-icon="open" class="fa-solid fa-bars fa-lg" aria-hidden="true"></i>
+            <i data-mobile-nav-icon="close" class="fa-solid fa-xmark fa-lg hidden" aria-hidden="true"></i>
           </button>
           <div class="hidden items-center gap-6 md:flex">
             ${navItemsMarkup}

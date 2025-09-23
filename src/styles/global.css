@@ -126,4 +126,32 @@
   .nav-link {
     @apply flex w-full items-center justify-start rounded-full px-4 py-2 text-base font-medium text-text transition hover:bg-accent/10 hover:text-accent md:w-auto md:px-0 md:py-0 md:hover:bg-transparent;
   }
+
+  [data-cta] {
+    @apply transition duration-200 ease-out;
+    transform: translateY(0) scale(1);
+  }
+
+  [data-cta][data-cta='primary'] {
+    box-shadow: 0 10px 20px rgba(144, 60, 56, 0.16);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    [data-cta]:hover,
+    [data-cta]:focus-visible {
+      transform: translateY(-3px) scale(1.015) rotate(-0.65deg);
+    }
+
+    [data-cta][data-cta='primary']:hover,
+    [data-cta][data-cta='primary']:focus-visible {
+      box-shadow: 0 14px 26px rgba(144, 60, 56, 0.22);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-cta]:hover,
+    [data-cta]:focus-visible {
+      transform: translateY(-2px);
+    }
+  }
 }
