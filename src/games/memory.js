@@ -4,6 +4,7 @@ import bumblebeeImage from '../assets/games/memory/bumblebee.png';
 import chilliSittingImage from '../assets/games/memory/chilli_sitting.png';
 import eetbakjeImage from '../assets/games/memory/eetbakje.png';
 import kwispelNeutralImage from '../assets/games/memory/kwispel_neutral.png';
+import { getSharedAudioContext, playSequence } from './audio.js';
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -125,7 +126,6 @@ export function mountMemoryGame(root) {
     lastResult: null,
   };
 
-  let audioCtx = null;
   const activeTimeouts = new Set();
 
   function cleanupTimers() {
@@ -144,28 +144,6 @@ export function mountMemoryGame(root) {
     activeTimeouts.add(timerId);
   }
 
-  function ensureAudioContext() {
-    if (typeof window === 'undefined') {
-      return null;
-    }
-
-    if (!audioCtx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-
-      if (!AudioCtx) {
-        return null;
-      }
-
-      audioCtx = new AudioCtx();
-    }
-
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume().catch(() => {});
-    }
-
-    return audioCtx;
-  }
-
   function playSound(name) {
     if (state.isMuted) {
       return;
@@ -177,38 +155,13 @@ export function mountMemoryGame(root) {
       return;
     }
 
-    const ctx = ensureAudioContext();
+    const ctx = getSharedAudioContext();
 
     if (!ctx) {
       return;
     }
 
-    const startAt = ctx.currentTime;
-
-    sequence.forEach((note) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = note.type ?? 'sine';
-      osc.frequency.value = note.frequency;
-
-      const noteStart = startAt + (note.delay ?? 0);
-      const noteEnd = noteStart + note.duration;
-
-      gain.gain.setValueAtTime(0.0001, noteStart);
-      gain.gain.exponentialRampToValueAtTime(note.volume ?? 0.2, noteStart + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(noteStart);
-      osc.stop(noteEnd + 0.05);
-      osc.onended = () => {
-        osc.disconnect();
-        gain.disconnect();
-      };
-    });
+    playSequence(sequence, { context: ctx, attack: 0.02, release: 0.1 });
   }
 
 function beginGame(optionId) {
@@ -567,10 +520,6 @@ function beginGame(optionId) {
     destroy() {
       cleanupTimers();
       root.removeEventListener('click', handleClick);
-      if (audioCtx) {
-        audioCtx.close().catch(() => {});
-        audioCtx = null;
-      }
       root.innerHTML = '';
       root.removeAttribute('data-game');
     },

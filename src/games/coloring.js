@@ -1,342 +1,26 @@
 import { t } from '../i18n.js';
-import kwispelTongueTemplate from '../assets/games/coloring/kwispel_tongue_template.svg';
+import { playTone } from './audio.js';
+import { COLORING_DEFAULTS, createColoringConfig } from './coloring/config.js';
+import {
+  drawPlaceholderGuide,
+  drawRoundedRectPath,
+  floodFill,
+  hexToRgba,
+} from './coloring/canvas.js';
 
-const DEFAULT_CANVAS_WIDTH = 960;
-const DEFAULT_CANVAS_HEIGHT = 680;
-const MAX_HISTORY = 25;
-const BUCKET_TOLERANCE = 22;
-const CLEAR_HOLD_DURATION_MS = 1600;
-const CLEAR_PROGRESS_RADIUS = 21;
-const CLEAR_PROGRESS_CIRCUMFERENCE = 2 * Math.PI * CLEAR_PROGRESS_RADIUS;
-const CLEAR_PROGRESS_RESET_DELAY_MS = 320;
-const PALETTE_SCROLL_STYLE_ID = 'kwispel-palette-scroll-style';
-
-let sharedAudioContext = null;
-
-const UI_SOUND_MAP = {
-  color: { frequency: 820, duration: 0.12, volume: 0.07, type: 'triangle' },
-  tool: { frequency: 560, duration: 0.14, volume: 0.07, type: 'sine' },
-  brush: { frequency: 420, duration: 0.1, volume: 0.06, type: 'sine' },
-  action: { frequency: 300, duration: 0.12, volume: 0.06, type: 'square' },
-  clear: { frequency: 220, duration: 0.28, volume: 0.08, type: 'sine' },
-  hint: { frequency: 180, duration: 0.16, volume: 0.05, type: 'triangle' },
-};
-
-function getAudioContext() {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextCtor) {
-    return null;
-  }
-
-  if (!sharedAudioContext || sharedAudioContext.state === 'closed') {
-    sharedAudioContext = new AudioContextCtor();
-  }
-
-  if (sharedAudioContext.state === 'suspended') {
-    sharedAudioContext.resume().catch(() => {});
-  }
-
-  return sharedAudioContext;
-}
-
-function playTone({ frequency, duration, volume, type }) {
-  const context = getAudioContext();
-
-  if (!context) {
-    return;
-  }
-
-  const oscillator = context.createOscillator();
-  const gainNode = context.createGain();
-
-  oscillator.type = type ?? 'sine';
-  oscillator.frequency.value = frequency ?? 440;
-  gainNode.gain.value = volume ?? 0.07;
-
-  oscillator.connect(gainNode);
-  gainNode.connect(context.destination);
-
-  const now = context.currentTime;
-  const end = now + (duration ?? 0.18);
-
-  gainNode.gain.setValueAtTime(gainNode.gain.value, now);
-  gainNode.gain.exponentialRampToValueAtTime(0.0001, end);
-
-  oscillator.start(now);
-  oscillator.stop(end);
-}
-
-function playUiSound(kind) {
-  const config = UI_SOUND_MAP[kind] ?? UI_SOUND_MAP.action;
-  playTone(config);
-}
-
-const SOFT_PANTONE_PALETTE = [
-  { id: 'cotton-candy', label: 'Pantone 705 C', value: '#f6d6de' },
-  { id: 'apricot-cream', label: 'Pantone 4745 C', value: '#f4c7b5' },
-  { id: 'peach-fuzz', label: 'Pantone 7411 C', value: '#f6d9b8' },
-  { id: 'sunny-haze', label: 'Pantone 600 C', value: '#f3edba' },
-  { id: 'sage-mist', label: 'Pantone 5807 C', value: '#dbe6c2' },
-  { id: 'mint-puff', label: 'Pantone 559 C', value: '#cfe5d4' },
-  { id: 'sea-glass', label: 'Pantone 628 C', value: '#cbe5ee' },
-  { id: 'sky-vellum', label: 'Pantone 2706 C', value: '#d6d8f6' },
-  { id: 'lilac-fog', label: 'Pantone 7443 C', value: '#e4d0f2' },
-  { id: 'rosewater', label: 'Pantone 706 C', value: '#efd0d7' },
-  { id: 'warm-sand', label: 'Pantone 480 C', value: '#eadbd1' },
-  { id: 'soft-clay', label: 'Pantone 474 C', value: '#d8c4b8' },
-];
-
-const TOOL_OPTIONS = [
-  { id: 'brush', labelKey: 'coloringGame.tools.brush', icon: 'fa-solid fa-paintbrush' },
-  { id: 'bucket', labelKey: 'coloringGame.tools.bucket', icon: 'fa-solid fa-fill-drip' },
-  { id: 'eraser', labelKey: 'coloringGame.tools.eraser', icon: 'fa-solid fa-eraser' },
-];
-
-const BRUSH_SIZES = [
-  { id: 'fine', size: 12, labelKey: 'coloringGame.brushSizes.fine' },
-  { id: 'medium', size: 26, labelKey: 'coloringGame.brushSizes.medium' },
-  { id: 'bold', size: 40, labelKey: 'coloringGame.brushSizes.bold' },
-];
-
-const DEFAULT_TEMPLATES = [
-  {
-    id: 'kwispel-tongue',
-    titleKey: 'coloringGame.templates.items.kwispelTongue.title',
-    descriptionKey: 'coloringGame.templates.items.kwispelTongue.description',
-    tags: [
-      'coloringGame.templates.items.kwispelTongue.tags.ages',
-      'coloringGame.templates.items.kwispelTongue.tags.details',
-    ],
-    assetUrl: kwispelTongueTemplate,
-    previewAltKey: 'coloringGame.templates.items.kwispelTongue.previewAlt',
-  },
-];
-
-function hexToRgba(hex) {
-  let normalized = hex.replace(/^#/, '');
-
-  if (normalized.length === 3) {
-    normalized = normalized
-      .split('')
-      .map((char) => char + char)
-      .join('');
-  }
-
-  const value = parseInt(normalized, 16);
-  const r = (value >> 16) & 255;
-  const g = (value >> 8) & 255;
-  const b = value & 255;
-
-  return [r, g, b, 255];
-}
-
-function colorsMatch(a, b) {
-  return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
-}
-
-function isWithinTolerance(data, index, target, tolerance) {
-  return (
-    Math.abs(data[index] - target[0]) <= tolerance &&
-    Math.abs(data[index + 1] - target[1]) <= tolerance &&
-    Math.abs(data[index + 2] - target[2]) <= tolerance &&
-    Math.abs(data[index + 3] - target[3]) <= tolerance
-  );
-}
-
-function floodFill(paintImage, outlineImage, startX, startY, fillColor, tolerance) {
-  const { data, width, height } = paintImage;
-
-  if (startX < 0 || startX >= width || startY < 0 || startY >= height) {
-    return false;
-  }
-
-  const startIndex = (startY * width + startX) * 4;
-  const targetColor = [data[startIndex], data[startIndex + 1], data[startIndex + 2], data[startIndex + 3]];
-
-  if (colorsMatch(targetColor, fillColor)) {
-    return false;
-  }
-
-  const visited = new Uint8Array(width * height);
-  const stack = [startX, startY];
-  let changed = false;
-
-  while (stack.length > 0) {
-    const y = stack.pop();
-    const x = stack.pop();
-
-    if (x < 0 || x >= width || y < 0 || y >= height) {
-      continue;
-    }
-
-    const offset = y * width + x;
-
-    if (visited[offset] === 1) {
-      continue;
-    }
-
-    visited[offset] = 1;
-
-    const dataIndex = offset * 4;
-
-    if (!isWithinTolerance(data, dataIndex, targetColor, tolerance)) {
-      continue;
-    }
-
-    if (outlineImage && outlineImage.data[dataIndex + 3] > 70) {
-      continue;
-    }
-
-    data[dataIndex] = fillColor[0];
-    data[dataIndex + 1] = fillColor[1];
-    data[dataIndex + 2] = fillColor[2];
-    data[dataIndex + 3] = fillColor[3];
-    changed = true;
-
-    stack.push(x + 1, y);
-    stack.push(x - 1, y);
-    stack.push(x, y + 1);
-    stack.push(x, y - 1);
-  }
-
-  return changed;
-}
-
-function drawPlaceholderGuide(ctx, width, height) {
-  ctx.clearRect(0, 0, width, height);
-
-  const stroke = 'rgba(47, 42, 40, 0.92)';
-  const lineWidth = Math.max(width, height) * 0.008 + 4;
-
-  ctx.save();
-  ctx.lineWidth = lineWidth;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = stroke;
-
-  // Body outline
-  ctx.beginPath();
-  ctx.moveTo(width * 0.24, height * 0.66);
-  ctx.quadraticCurveTo(width * 0.24, height * 0.45, width * 0.38, height * 0.42);
-  ctx.quadraticCurveTo(width * 0.5, height * 0.28, width * 0.62, height * 0.42);
-  ctx.quadraticCurveTo(width * 0.76, height * 0.45, width * 0.76, height * 0.65);
-  ctx.quadraticCurveTo(width * 0.77, height * 0.83, width * 0.5, height * 0.86);
-  ctx.quadraticCurveTo(width * 0.23, height * 0.82, width * 0.24, height * 0.66);
-  ctx.closePath();
-  ctx.stroke();
-
-  // Head
-  ctx.beginPath();
-  ctx.ellipse(width * 0.5, height * 0.43, width * 0.18, height * 0.2, 0, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Left ear
-  ctx.beginPath();
-  ctx.ellipse(width * 0.4, height * 0.29, width * 0.1, height * 0.16, -0.3, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Right ear
-  ctx.beginPath();
-  ctx.ellipse(width * 0.6, height * 0.28, width * 0.1, height * 0.17, 0.3, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Eye shapes
-  const eyeRadius = width * 0.028;
-  ctx.beginPath();
-  ctx.ellipse(width * 0.45, height * 0.41, eyeRadius, eyeRadius * 1.2, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.ellipse(width * 0.55, height * 0.41, eyeRadius, eyeRadius * 1.2, 0, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Muzzle
-  ctx.beginPath();
-  ctx.ellipse(width * 0.5, height * 0.5, width * 0.12, height * 0.08, 0, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(width * 0.5, height * 0.49);
-  ctx.lineTo(width * 0.5, height * 0.56);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(width * 0.5, height * 0.56);
-  ctx.quadraticCurveTo(width * 0.58, height * 0.61, width * 0.63, height * 0.56);
-  ctx.moveTo(width * 0.5, height * 0.56);
-  ctx.quadraticCurveTo(width * 0.42, height * 0.61, width * 0.37, height * 0.56);
-  ctx.stroke();
-
-  // Cheek patches
-  ctx.beginPath();
-  ctx.ellipse(width * 0.4, height * 0.48, width * 0.07, height * 0.06, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.ellipse(width * 0.6, height * 0.48, width * 0.07, height * 0.06, 0, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Collar and tag
-  ctx.beginPath();
-  ctx.ellipse(width * 0.5, height * 0.61, width * 0.22, height * 0.07, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(width * 0.5, height * 0.65);
-  ctx.lineTo(width * 0.5, height * 0.72);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.ellipse(width * 0.5, height * 0.74, width * 0.05, height * 0.05, 0, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Belly patch
-  ctx.beginPath();
-  ctx.ellipse(width * 0.5, height * 0.7, width * 0.16, height * 0.12, 0, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Tail
-  ctx.beginPath();
-  ctx.moveTo(width * 0.7, height * 0.58);
-  ctx.quadraticCurveTo(width * 0.84, height * 0.52, width * 0.82, height * 0.4);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(width * 0.8, height * 0.42);
-  ctx.quadraticCurveTo(width * 0.86, height * 0.37, width * 0.76, height * 0.34);
-  ctx.stroke();
-
-  // Paws guidance
-  ctx.beginPath();
-  ctx.moveTo(width * 0.36, height * 0.82);
-  ctx.lineTo(width * 0.36, height * 0.88);
-  ctx.moveTo(width * 0.42, height * 0.82);
-  ctx.lineTo(width * 0.42, height * 0.88);
-  ctx.moveTo(width * 0.58, height * 0.82);
-  ctx.lineTo(width * 0.58, height * 0.88);
-  ctx.moveTo(width * 0.64, height * 0.82);
-  ctx.lineTo(width * 0.64, height * 0.88);
-  ctx.stroke();
-
-  // Ground details
-  ctx.beginPath();
-  ctx.moveTo(width * 0.2, height * 0.9);
-  ctx.quadraticCurveTo(width * 0.5, height * 0.94, width * 0.8, height * 0.9);
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-function ensurePaletteScrollStyle() {
+function ensurePaletteScrollStyle(styleId) {
   if (typeof document === 'undefined') {
     return;
   }
 
-  if (document.getElementById(PALETTE_SCROLL_STYLE_ID)) {
+  const targetId = styleId ?? COLORING_DEFAULTS.paletteScrollStyleId;
+
+  if (document.getElementById(targetId)) {
     return;
   }
 
   const style = document.createElement('style');
-  style.id = PALETTE_SCROLL_STYLE_ID;
+  style.id = targetId;
   style.textContent = `
     [data-palette-rail] [data-color-palette]::-webkit-scrollbar { display: none; }
   `;
@@ -401,10 +85,13 @@ function buildTemplateCardsMarkup(state, templates) {
     .join('');
 }
 
-function createMarkup(state, palette, templates) {
+function createMarkup(state, palette, templates, uiConfig) {
   const activeColor = palette.find((color) => color.id === state.activeColorId);
   const activeColorLabel = activeColor ? activeColor.label : '';
   const templateCards = buildTemplateCardsMarkup(state, templates);
+  const clearProgressRadius = uiConfig?.clearProgressRadius ?? COLORING_DEFAULTS.clear.progressRadius;
+  const clearProgressCircumference = uiConfig?.clearProgressCircumference ??
+    2 * Math.PI * clearProgressRadius;
 
   return `
     <div class="flex flex-col gap-6" data-coloring-shell>
@@ -440,17 +127,17 @@ function createMarkup(state, palette, templates) {
             </button>
             <button type="button" class="relative flex h-11 w-11 items-center justify-center rounded-full border border-transparent bg-accent text-lg text-white shadow-soft transition hover:bg-accent/90 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-accent/60 disabled:cursor-not-allowed disabled:opacity-50" data-action="clear" title="${t('coloringGame.actions.clearHoldHint')}">
               <svg class="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 48 48" role="presentation" aria-hidden="true">
-                <circle cx="24" cy="24" r="${CLEAR_PROGRESS_RADIUS}" fill="transparent" stroke="rgba(144,60,56,0.18)" stroke-width="3"></circle>
+                <circle cx="24" cy="24" r="${clearProgressRadius}" fill="transparent" stroke="rgba(144,60,56,0.18)" stroke-width="3"></circle>
                 <circle
                   cx="24"
                   cy="24"
-                  r="${CLEAR_PROGRESS_RADIUS}"
+                  r="${clearProgressRadius}"
                   fill="transparent"
                   stroke="#903c38"
                   stroke-width="3"
                   stroke-linecap="round"
-                  stroke-dasharray="${CLEAR_PROGRESS_CIRCUMFERENCE.toFixed(2)}"
-                  stroke-dashoffset="${CLEAR_PROGRESS_CIRCUMFERENCE.toFixed(2)}"
+                  stroke-dasharray="${clearProgressCircumference.toFixed(2)}"
+                  stroke-dashoffset="${clearProgressCircumference.toFixed(2)}"
                   data-progress-ring
                 ></circle>
               </svg>
@@ -493,9 +180,25 @@ function createMarkup(state, palette, templates) {
   `;
 }
 
-function getBrushSize(sizeId) {
-  const match = BRUSH_SIZES.find((item) => item.id === sizeId);
-  return match ? match.size : BRUSH_SIZES[1].size;
+function getBrushSize(brushSizes, sizeId) {
+  const source = Array.isArray(brushSizes) && brushSizes.length > 0
+    ? brushSizes
+    : COLORING_DEFAULTS.brushSizes;
+
+  const match = source.find((item) => item.id === sizeId && Number.isFinite(item.size));
+
+  if (match) {
+    return match.size;
+  }
+
+  const fallbackIndex = source.length > 1 ? 1 : 0;
+  const fallback = source[fallbackIndex];
+
+  if (fallback && Number.isFinite(fallback.size)) {
+    return fallback.size;
+  }
+
+  return 24;
 }
 
 function addListener(target, type, handler, options, store) {
@@ -508,9 +211,113 @@ export function mountColoringGame(root, options = {}) {
     throw new Error('Kleur game root ontbreekt.');
   }
 
-  const palette = Array.isArray(options.palette) && options.palette.length > 0 ? options.palette : SOFT_PANTONE_PALETTE;
-  const initialColorId = palette[0]?.id ?? 'cotton-candy';
-  const templates = Array.isArray(options.templates) && options.templates.length > 0 ? options.templates : DEFAULT_TEMPLATES;
+  const canvasOverrides = typeof options.canvas === 'object' && options.canvas
+    ? { ...options.canvas }
+    : {};
+
+  if (options.width !== undefined) {
+    canvasOverrides.width = options.width;
+  }
+  if (options.height !== undefined) {
+    canvasOverrides.height = options.height;
+  }
+  if (options.maxDevicePixelRatio !== undefined) {
+    canvasOverrides.maxDevicePixelRatio = options.maxDevicePixelRatio;
+  }
+  if (options.bucketTolerance !== undefined) {
+    canvasOverrides.bucketTolerance = options.bucketTolerance;
+  }
+
+  const historyOverrides = typeof options.history === 'object' && options.history
+    ? { ...options.history }
+    : {};
+
+  if (options.maxHistory !== undefined) {
+    historyOverrides.limit = options.maxHistory;
+  }
+
+  const configOverrides = {
+    palette: options.palette,
+    templates: options.templates,
+    tools: options.tools,
+    brushSizes: options.brushSizes,
+    audio: options.audio,
+    clear: options.clear,
+    fullscreen: options.fullscreen,
+    paletteScrollStyleId: options.paletteScrollStyleId,
+  };
+
+  if (Object.keys(canvasOverrides).length > 0) {
+    configOverrides.canvas = canvasOverrides;
+  }
+
+  if (Object.keys(historyOverrides).length > 0) {
+    configOverrides.history = historyOverrides;
+  }
+
+  const config = createColoringConfig(configOverrides);
+
+  const palette = config.palette;
+  const templates = config.templates;
+  const toolOptions = config.tools;
+  const brushSizes = config.brushSizes;
+  const uiSoundMap = config.audio.ui ?? COLORING_DEFAULTS.audio.ui;
+  const clearConfig = config.clear;
+  const historyLimit = Math.max(
+    1,
+    Number.isFinite(config.history?.limit)
+      ? config.history.limit
+      : COLORING_DEFAULTS.history.limit,
+  );
+  const bucketTolerance = Math.max(
+    0,
+    Number.isFinite(config.canvas?.bucketTolerance)
+      ? config.canvas.bucketTolerance
+      : COLORING_DEFAULTS.canvas.bucketTolerance,
+  );
+
+  const baseWidth = Number.isFinite(config.canvas?.width)
+    ? config.canvas.width
+    : COLORING_DEFAULTS.canvas.width;
+  const baseHeight = Number.isFinite(config.canvas?.height)
+    ? config.canvas.height
+    : COLORING_DEFAULTS.canvas.height;
+  const baseAspectRatio = baseWidth > 0
+    ? baseHeight / baseWidth
+    : COLORING_DEFAULTS.canvas.height / COLORING_DEFAULTS.canvas.width;
+  const baseAspectString = `${baseWidth} / ${baseHeight}`;
+  let currentAspectRatio = baseAspectRatio;
+  const maxDevicePixelRatio = Number.isFinite(config.canvas?.maxDevicePixelRatio)
+    ? config.canvas.maxDevicePixelRatio
+    : COLORING_DEFAULTS.canvas.maxDevicePixelRatio;
+
+  const clearProgressRadius = Math.max(
+    0,
+    Number.isFinite(clearConfig?.progressRadius)
+      ? clearConfig.progressRadius
+      : COLORING_DEFAULTS.clear.progressRadius,
+  );
+  const clearProgressCircumference = 2 * Math.PI * clearProgressRadius;
+  const clearHoldDurationMs = Math.max(
+    10,
+    Number.isFinite(clearConfig?.holdDurationMs)
+      ? clearConfig.holdDurationMs
+      : COLORING_DEFAULTS.clear.holdDurationMs,
+  );
+  const clearProgressResetDelayMs = Math.max(
+    0,
+    Number.isFinite(clearConfig?.progressResetDelayMs)
+      ? clearConfig.progressResetDelayMs
+      : COLORING_DEFAULTS.clear.progressResetDelayMs,
+  );
+  const fullscreenBackdrop = config.fullscreen?.backdrop ?? COLORING_DEFAULTS.fullscreen.backdrop;
+
+  const initialColorEntry = palette[0] ?? COLORING_DEFAULTS.palette[0] ?? {
+    id: 'default-color',
+    value: '#f6d6de',
+    label: '',
+  };
+
   const initialTemplateId = (() => {
     if (!Array.isArray(templates) || templates.length === 0) {
       return null;
@@ -524,11 +331,19 @@ export function mountColoringGame(root, options = {}) {
     return templates[0].id;
   })();
 
+  const defaultToolId = toolOptions.find((tool) => tool.id === 'brush')?.id
+    ?? toolOptions[0]?.id
+    ?? 'brush';
+
+  const defaultBrushSizeId = brushSizes.find((size) => size.id === 'medium')?.id
+    ?? brushSizes[0]?.id
+    ?? COLORING_DEFAULTS.brushSizes[0].id;
+
   const state = {
-    toolId: 'brush',
-    brushSizeId: 'medium',
-    activeColorId: initialColorId,
-    activeColor: palette.find((color) => color.id === initialColorId)?.value ?? '#f6d6de',
+    toolId: defaultToolId,
+    brushSizeId: defaultBrushSizeId,
+    activeColorId: initialColorEntry.id,
+    activeColor: initialColorEntry.value ?? '#f6d6de',
     activeTemplateId: initialTemplateId,
     pointerId: null,
     isDrawing: false,
@@ -538,10 +353,20 @@ export function mountColoringGame(root, options = {}) {
     historyIndex: -1,
   };
 
-  ensurePaletteScrollStyle();
+  const playUiSound = (kind) => {
+    const note = uiSoundMap[kind] ?? uiSoundMap.action;
+    if (note) {
+      playTone(note);
+    }
+  };
+
+  ensurePaletteScrollStyle(config.paletteScrollStyleId);
 
   root.setAttribute('data-game', 'coloring');
-  root.innerHTML = createMarkup(state, palette, templates);
+  root.innerHTML = createMarkup(state, palette, templates, {
+    clearProgressRadius,
+    clearProgressCircumference,
+  });
 
   const disposers = [];
   let statusTimeoutId = null;
@@ -572,12 +397,6 @@ export function mountColoringGame(root, options = {}) {
   let resizeObserver = null;
   let resizeFrame = null;
 
-  const baseWidth = options.width ?? DEFAULT_CANVAS_WIDTH;
-  const baseHeight = options.height ?? DEFAULT_CANVAS_HEIGHT;
-  const baseAspectRatio = baseWidth > 0 ? baseHeight / baseWidth : DEFAULT_CANVAS_HEIGHT / DEFAULT_CANVAS_WIDTH;
-  const baseAspectString = `${baseWidth} / ${baseHeight}`;
-  let currentAspectRatio = baseAspectRatio;
-  const maxDevicePixelRatio = typeof options.maxDevicePixelRatio === 'number' ? options.maxDevicePixelRatio : 2.5;
   const supportsAspectRatio = typeof document !== 'undefined' &&
     !!document.documentElement?.style &&
     'aspectRatio' in document.documentElement.style;
@@ -612,7 +431,6 @@ export function mountColoringGame(root, options = {}) {
   const originalSectionBorder = canvasSection?.style.borderColor ?? '';
   const originalRootBg = root.style.backgroundColor;
   const originalBodyBg = typeof document !== 'undefined' && document.body ? document.body.style.backgroundColor : '';
-  const FULLSCREEN_BACKDROP = '#fdf8f4';
 
   let outlineSnapshot = null;
   let canvasCornerRadius = 0;
@@ -834,7 +652,7 @@ export function mountColoringGame(root, options = {}) {
   }
 
   function renderTools() {
-    toolContainer.innerHTML = TOOL_OPTIONS.map((tool) => {
+    toolContainer.innerHTML = toolOptions.map((tool) => {
       const isActive = state.toolId === tool.id;
       const classes = [
         'flex h-12 w-12 items-center justify-center rounded-full border text-lg transition focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-accent/60',
@@ -888,7 +706,7 @@ export function mountColoringGame(root, options = {}) {
   }
 
   function renderBrushSizes() {
-    brushContainer.innerHTML = BRUSH_SIZES.map((entry) => {
+    brushContainer.innerHTML = brushSizes.map((entry) => {
       const isActive = state.brushSizeId === entry.id;
       const classes = [
         'flex h-11 w-11 items-center justify-center rounded-full border transition focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-accent/60',
@@ -898,7 +716,8 @@ export function mountColoringGame(root, options = {}) {
       ]
         .filter(Boolean)
         .join(' ');
-      const iconSizeRem = Math.min(2.0, Math.max(0.8, entry.size / 18)).toFixed(2);
+      const brushIconBasis = Number.isFinite(entry.size) ? entry.size : 24;
+      const iconSizeRem = Math.min(2.0, Math.max(0.8, brushIconBasis / 18)).toFixed(2);
 
       return `
         <button
@@ -1190,7 +1009,7 @@ export function mountColoringGame(root, options = {}) {
     const snapshot = paintCtx.getImageData(0, 0, width, height);
     state.history.push(snapshot);
 
-    if (state.history.length > MAX_HISTORY) {
+    if (state.history.length > historyLimit) {
       state.history.shift();
     }
 
@@ -1222,7 +1041,7 @@ export function mountColoringGame(root, options = {}) {
   }
 
   function drawPoint(point) {
-    const radius = getBrushSize(state.brushSizeId) / 2;
+    const radius = getBrushSize(brushSizes, state.brushSizeId) / 2;
 
     paintCtx.save();
     paintCtx.lineJoin = 'round';
@@ -1249,7 +1068,7 @@ export function mountColoringGame(root, options = {}) {
     paintCtx.save();
     paintCtx.lineJoin = 'round';
     paintCtx.lineCap = 'round';
-    paintCtx.lineWidth = getBrushSize(state.brushSizeId);
+    paintCtx.lineWidth = getBrushSize(brushSizes, state.brushSizeId);
 
     if (state.toolId === 'eraser') {
       paintCtx.globalCompositeOperation = 'destination-out';
@@ -1270,7 +1089,14 @@ export function mountColoringGame(root, options = {}) {
   function applyBucket(point) {
     const fillColor = hexToRgba(state.activeColor);
     const image = paintCtx.getImageData(0, 0, width, height);
-    const changed = floodFill(image, outlineSnapshot, Math.floor(point.x), Math.floor(point.y), fillColor, BUCKET_TOLERANCE);
+    const changed = floodFill(
+      image,
+      outlineSnapshot,
+      Math.floor(point.x),
+      Math.floor(point.y),
+      fillColor,
+      bucketTolerance,
+    );
 
     if (changed) {
       paintCtx.putImageData(image, 0, 0);
@@ -1397,7 +1223,7 @@ export function mountColoringGame(root, options = {}) {
     }
 
     const clamped = Math.min(1, Math.max(0, progress));
-    const offset = CLEAR_PROGRESS_CIRCUMFERENCE * (1 - clamped);
+    const offset = clearProgressCircumference * (1 - clamped);
     clearProgressRing.style.strokeDashoffset = offset.toString();
   }
 
@@ -1429,7 +1255,7 @@ export function mountColoringGame(root, options = {}) {
     }
 
     if (triggered) {
-      clearHoldState.resetTimeoutId = window.setTimeout(resetClearProgress, CLEAR_PROGRESS_RESET_DELAY_MS);
+      clearHoldState.resetTimeoutId = window.setTimeout(resetClearProgress, clearProgressResetDelayMs);
     } else {
       resetClearProgress();
     }
@@ -1457,7 +1283,7 @@ export function mountColoringGame(root, options = {}) {
     }
 
     const elapsed = now - clearHoldState.start;
-    const progress = Math.min(1, elapsed / CLEAR_HOLD_DURATION_MS);
+    const progress = Math.min(1, elapsed / clearHoldDurationMs);
     setClearProgress(progress);
 
     if (progress >= 1) {
@@ -1600,14 +1426,14 @@ export function mountColoringGame(root, options = {}) {
 
   function applyFullscreenStyles(isActive) {
     if (isActive) {
-      canvasWrapper.style.backgroundColor = FULLSCREEN_BACKDROP;
+      canvasWrapper.style.backgroundColor = fullscreenBackdrop;
       if (canvasSection) {
-        canvasSection.style.backgroundColor = FULLSCREEN_BACKDROP;
+        canvasSection.style.backgroundColor = fullscreenBackdrop;
         canvasSection.style.borderColor = 'rgba(47, 42, 40, 0.08)';
       }
-      root.style.backgroundColor = FULLSCREEN_BACKDROP;
+      root.style.backgroundColor = fullscreenBackdrop;
       if (typeof document !== 'undefined' && document.body) {
-        document.body.style.backgroundColor = FULLSCREEN_BACKDROP;
+        document.body.style.backgroundColor = fullscreenBackdrop;
       }
     } else {
       if (originalWrapperBg) {
