@@ -1,47 +1,6 @@
 import { t } from '../i18n.js';
-import antImage from '../assets/games/memory/ant.png';
-import bumblebeeImage from '../assets/games/memory/bumblebee.png';
-import chilliSittingImage from '../assets/games/memory/chilli_sitting.png';
-import eetbakjeImage from '../assets/games/memory/eetbakje.png';
-import kwispelNeutralImage from '../assets/games/memory/kwispel_neutral.png';
 import { getSharedAudioContext, playSequence } from './audio.js';
-
-const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
-const CARD_CATALOG = [
-  { pairKey: 'kwispelNeutral', image: kwispelNeutralImage },
-  { pairKey: 'chilliSitting', image: chilliSittingImage },
-  { pairKey: 'bumblebee', image: bumblebeeImage },
-  { pairKey: 'ant', image: antImage },
-  { pairKey: 'eetbakje', image: eetbakjeImage },
-];
-
-const DIFFICULTY_OPTIONS = [
-  { id: 'sprout', pairs: 3 },
-  { id: 'paws', pairs: 4 },
-  { id: 'tails', pairs: 6 },
-];
-
-const SOUND_MAP = {
-  start: [
-    { frequency: 440, duration: 0.12, volume: 0.22 },
-    { frequency: 554.37, duration: 0.12, volume: 0.2, delay: 0.14 },
-  ],
-  flip: [{ frequency: 520, duration: 0.1, volume: 0.18 }],
-  match: [
-    { frequency: 620, duration: 0.16, volume: 0.22 },
-    { frequency: 780, duration: 0.18, volume: 0.22, delay: 0.18 },
-  ],
-  mismatch: [
-    { frequency: 320, duration: 0.22, volume: 0.18, type: 'sawtooth' },
-    { frequency: 250, duration: 0.22, volume: 0.16, type: 'sawtooth', delay: 0.24 },
-  ],
-  victory: [
-    { frequency: 523.25, duration: 0.18, volume: 0.22 },
-    { frequency: 659.25, duration: 0.18, volume: 0.2, delay: 0.2 },
-    { frequency: 783.99, duration: 0.22, volume: 0.18, delay: 0.42 },
-  ],
-};
+import { createMemoryConfig } from './memory/config.js';
 
 function shuffle(source) {
   const array = [...source];
@@ -54,16 +13,23 @@ function shuffle(source) {
   return array;
 }
 
-function buildImagePairs(pairCount) {
-  const available = CARD_CATALOG.slice(0, pairCount);
+function buildImagePairs(catalog, pairCount) {
+  if (!Array.isArray(catalog) || catalog.length === 0 || pairCount <= 0) {
+    return [];
+  }
+
+  const candidates = catalog.filter((item) => item && item.image);
+  const available = shuffle(candidates).slice(0, Math.min(pairCount, candidates.length));
   const cards = [];
 
   available.forEach((item, index) => {
-    const pairKey = `${item.pairKey}-${index}`;
+    const baseKey = item.pairKey ?? item.labelKey ?? `image-${index}`;
+    const labelKey = item.labelKey ?? item.pairKey ?? baseKey;
+    const pairKey = `${baseKey}-${index}`;
     const cardBase = {
       pairKey,
       kind: 'image',
-      labelKey: item.pairKey,
+      labelKey,
       image: item.image,
     };
     cards.push({ ...cardBase, id: `${pairKey}-a` });
@@ -73,8 +39,13 @@ function buildImagePairs(pairCount) {
   return cards;
 }
 
-function buildLetterFallbackPairs(requiredPairs, offset = 0) {
-  const lettersPool = shuffle(LETTERS).slice(0, requiredPairs);
+function buildLetterFallbackPairs(letters, requiredPairs, offset = 0) {
+  if (requiredPairs <= 0) {
+    return [];
+  }
+
+  const pool = Array.isArray(letters) && letters.length > 0 ? letters : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const lettersPool = shuffle(pool).slice(0, requiredPairs);
   const cards = [];
 
   lettersPool.forEach((letter, index) => {
@@ -91,25 +62,31 @@ function buildLetterFallbackPairs(requiredPairs, offset = 0) {
   return cards;
 }
 
-function createDeck(pairCount) {
-  const imagePairs = buildImagePairs(pairCount);
+function createDeck(catalog, letters, pairCount) {
+  const imagePairs = buildImagePairs(catalog, pairCount);
 
   if (imagePairs.length / 2 === pairCount) {
     return shuffle(imagePairs);
   }
 
   const missingPairs = pairCount - imagePairs.length / 2;
-  const fallbackPairs = buildLetterFallbackPairs(missingPairs, imagePairs.length / 2);
+  const fallbackPairs = buildLetterFallbackPairs(letters, missingPairs, imagePairs.length / 2);
 
   return shuffle([...imagePairs, ...fallbackPairs]);
 }
 
-export function mountMemoryGame(root) {
+export function mountMemoryGame(root, configOverrides = {}) {
   if (!root) {
     throw new Error('Memory game root ontbreekt.');
   }
 
   root.setAttribute('data-game', 'memory');
+
+  const config = createMemoryConfig(configOverrides);
+  const cardCatalog = Array.isArray(config.cards) ? config.cards : [];
+  const difficultyOptions = Array.isArray(config.difficulties) ? config.difficulties : [];
+  const letterPool = Array.isArray(config.letters) ? config.letters : [];
+  const soundMap = config.audio && typeof config.audio === 'object' ? config.audio : {};
 
   const state = {
     stage: 'intro',
@@ -149,7 +126,7 @@ export function mountMemoryGame(root) {
       return;
     }
 
-    const sequence = SOUND_MAP[name];
+    const sequence = soundMap[name];
 
     if (!sequence || typeof window === 'undefined') {
       return;
@@ -164,35 +141,36 @@ export function mountMemoryGame(root) {
     playSequence(sequence, { context: ctx, attack: 0.02, release: 0.1 });
   }
 
-function beginGame(optionId) {
-  const option = DIFFICULTY_OPTIONS.find((item) => item.id === optionId);
+  function beginGame(optionId) {
+    const option = difficultyOptions.find((item) => item.id === optionId);
 
-  if (!option) {
-    return;
+    if (!option) {
+      return;
+    }
+
+    const availableArtCount = cardCatalog.filter((item) => item && item.image).length;
+    const hasEnoughArt = availableArtCount >= option.pairs;
+
+    if (!hasEnoughArt) {
+      return;
+    }
+
+    cleanupTimers();
+    const deck = createDeck(cardCatalog, letterPool, option.pairs);
+    state.stage = 'playing';
+    state.difficultyId = option.id;
+    state.deck = deck;
+    state.cardLookup = new Map(deck.map((card) => [card.id, card]));
+    state.flippedIds = [];
+    state.matchedIds = new Set();
+    state.moves = 0;
+    state.isBusy = false;
+    state.startTime = performance.now();
+    state.lastResult = null;
+
+    render();
+    playSound('start');
   }
-
-  const hasEnoughArt = CARD_CATALOG.length >= option.pairs;
-
-  if (!hasEnoughArt) {
-    return;
-  }
-
-  cleanupTimers();
-  const deck = createDeck(option.pairs);
-  state.stage = 'playing';
-  state.difficultyId = option.id;
-  state.deck = deck;
-  state.cardLookup = new Map(deck.map((card) => [card.id, card]));
-  state.flippedIds = [];
-  state.matchedIds = new Set();
-  state.moves = 0;
-  state.isBusy = false;
-  state.startTime = performance.now();
-  state.lastResult = null;
-
-  render();
-  playSound('start');
-}
 
   function resetToIntro() {
     cleanupTimers();
@@ -335,11 +313,12 @@ function beginGame(optionId) {
   }
 
   function renderIntro() {
-    const cards = DIFFICULTY_OPTIONS.map((option) => {
+    const availableArtCount = cardCatalog.filter((item) => item && item.image).length;
+    const cards = difficultyOptions.map((option) => {
       const isSelected = state.selectedDifficultyId === option.id;
       const label = t(`memoryGame.difficulty.${option.id}.label`);
       const description = t(`memoryGame.difficulty.${option.id}.subLabel`);
-      const hasEnoughArt = CARD_CATALOG.length >= option.pairs;
+      const hasEnoughArt = availableArtCount >= option.pairs;
       const classes = [
         'flex flex-col gap-2 rounded-3xl border px-5 py-6 text-left transition-all',
         isSelected
@@ -395,7 +374,7 @@ function beginGame(optionId) {
       return '';
     }
 
-    const difficulty = DIFFICULTY_OPTIONS.find((item) => item.id === state.difficultyId);
+    const difficulty = difficultyOptions.find((item) => item.id === state.difficultyId);
     const levelLabel = difficulty ? t(`memoryGame.difficulty.${difficulty.id}.label`) : '';
     const pairsFound = Math.floor(state.matchedIds.size / 2);
     const totalPairs = Math.floor(state.deck.length / 2);
