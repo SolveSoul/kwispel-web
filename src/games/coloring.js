@@ -95,12 +95,6 @@ function createMarkup(state, palette, templates, uiConfig) {
 
   return `
     <div class="flex flex-col gap-6" data-coloring-shell>
-      <section class="flex flex-col gap-2 rounded-3xl border border-accent/15 bg-white/90 p-5 shadow-soft">
-        <span class="inline-flex w-fit items-center rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">${t('coloringGame.pageEyebrow')}</span>
-        <h2 class="text-2xl text-accent md:text-3xl">${t('coloringGame.pageTitle')}</h2>
-        <p class="text-sm text-text/70 md:text-base">${t('coloringGame.pageIntro')}</p>
-        <p class="text-sm text-text/70 md:text-base">${t('coloringGame.instructions')}</p>
-      </section>
       <section class="flex flex-col gap-4 rounded-3xl border border-accent/10 bg-white/90 p-5 shadow-soft" data-template-picker>
         <div class="flex flex-col gap-2">
           <h3 class="text-lg font-semibold text-accent md:text-xl">${t('coloringGame.templates.heading')}</h3>
@@ -161,19 +155,35 @@ function createMarkup(state, palette, templates, uiConfig) {
             <i aria-hidden="true" class="fa-solid fa-expand"></i>
             <span class="sr-only">${t('coloringGame.actions.fullscreen')}</span>
           </button>
-          <div class="pointer-events-auto absolute bottom-4 left-4 z-20 flex w-[4.5rem] flex-col items-center gap-3 rounded-3xl border border-accent/10 bg-white/95 p-2 shadow-soft backdrop-blur" data-palette-rail>
+          <div class="pointer-events-auto absolute bottom-4 left-4 z-20 flex w-[5rem] flex-col items-center gap-3 rounded-3xl border border-accent/10 bg-white/95 p-2 shadow-soft backdrop-blur" data-palette-rail>
             <div class="flex flex-col items-center gap-2" data-active-color-info>
               <span class="h-9 w-9 rounded-full border border-white/70 shadow-soft" data-active-color style="background-color: ${state.activeColor};"></span>
               <span class="visually-hidden" data-active-color-label>${t('coloringGame.activeColorLabel').replace('{label}', activeColorLabel)}</span>
             </div>
-            <div class="flex max-h-[14rem] flex-col items-center gap-2 overflow-y-auto pb-1 [scrollbar-width:none]" data-color-palette style="-ms-overflow-style: none;"></div>
+            <div class="flex w-full flex-col items-center gap-2" data-palette-scroll-region>
+              <button
+                type="button"
+                class="flex h-8 w-8 items-center justify-center rounded-full border border-accent/20 bg-white text-sm text-accent transition hover:border-accent/40 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-accent/60 disabled:cursor-not-allowed disabled:opacity-40"
+                data-palette-scroll="up"
+                title="${t('coloringGame.palette.scrollUp')}"
+                aria-label="${t('coloringGame.palette.scrollUp')}"
+              >
+                <i aria-hidden="true" class="fa-solid fa-chevron-up"></i>
+              </button>
+              <div class="flex max-h-[18rem] w-full flex-col items-center gap-2 overflow-y-auto pb-1 [scrollbar-width:none]" data-color-palette style="-ms-overflow-style: none;"></div>
+              <button
+                type="button"
+                class="flex h-8 w-8 items-center justify-center rounded-full border border-accent/20 bg-white text-sm text-accent transition hover:border-accent/40 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-accent/60 disabled:cursor-not-allowed disabled:opacity-40"
+                data-palette-scroll="down"
+                title="${t('coloringGame.palette.scrollDown')}"
+                aria-label="${t('coloringGame.palette.scrollDown')}"
+              >
+                <i aria-hidden="true" class="fa-solid fa-chevron-down"></i>
+              </button>
+            </div>
           </div>
           <div class="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-3xl border border-accent/10 bg-white/95 px-3 py-2 shadow-soft backdrop-blur" data-brush-sizes></div>
           <div class="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-2 rounded-3xl border border-accent/10 bg-white/95 p-3 shadow-soft backdrop-blur" data-toolbar-tools></div>
-        </div>
-        <div class="flex flex-col gap-1 rounded-2xl border border-dashed border-accent/20 bg-white/70 p-4 text-sm text-text/70">
-          <strong class="text-accent">${t('coloringGame.palette.heading')}</strong>
-          <p>${t('coloringGame.palette.hint')}</p>
         </div>
       </section>
     </div>
@@ -378,6 +388,7 @@ export function mountColoringGame(root, options = {}) {
   const canvas = root.querySelector('[data-coloring-canvas]');
   const toolContainer = root.querySelector('[data-toolbar-tools]');
   const paletteContainer = root.querySelector('[data-color-palette]');
+  const paletteScrollButtons = Array.from(root.querySelectorAll('[data-palette-scroll]'));
   const brushContainer = root.querySelector('[data-brush-sizes]');
   const activeColorPreview = root.querySelector('[data-active-color]');
   const activeColorLabel = root.querySelector('[data-active-color-label]');
@@ -396,6 +407,19 @@ export function mountColoringGame(root, options = {}) {
 
   let resizeObserver = null;
   let resizeFrame = null;
+
+  const paletteSwipeState = {
+    pointerId: null,
+    isTracking: false,
+    isSwiping: false,
+    startY: 0,
+    startScrollTop: 0,
+  };
+
+  if (paletteContainer?.style) {
+    paletteContainer.style.touchAction = 'none';
+    paletteContainer.style.webkitOverflowScrolling = 'touch';
+  }
 
   const supportsAspectRatio = typeof document !== 'undefined' &&
     !!document.documentElement?.style &&
@@ -680,11 +704,15 @@ export function mountColoringGame(root, options = {}) {
   }
 
   function renderPalette() {
+    if (!paletteContainer) {
+      return;
+    }
+
     paletteContainer.innerHTML = palette
       .map((color) => {
         const isActive = color.id === state.activeColorId;
         const classes = [
-          'flex h-9 w-9 items-center justify-center rounded-full border shadow-soft transition focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-accent/60',
+          'flex h-9 w-9 items-center justify-center rounded-full border shadow-soft transition focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-accent/60 aspect-square shrink-0 p-0',
           isActive ? 'border-2 border-accent scale-105' : 'border-white/70 hover:border-accent/40',
         ]
           .filter(Boolean)
@@ -703,6 +731,14 @@ export function mountColoringGame(root, options = {}) {
         `;
       })
       .join('');
+
+    const update = () => updatePaletteScrollIndicators();
+
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(update);
+    } else {
+      update();
+    }
   }
 
   function renderBrushSizes() {
@@ -717,7 +753,7 @@ export function mountColoringGame(root, options = {}) {
         .filter(Boolean)
         .join(' ');
       const brushIconBasis = Number.isFinite(entry.size) ? entry.size : 24;
-      const iconSizeRem = Math.min(2.0, Math.max(0.8, brushIconBasis / 18)).toFixed(2);
+      const iconSizeRem = Math.min(1.4, Math.max(0.6, brushIconBasis / 24)).toFixed(2);
 
       return `
         <button
@@ -728,12 +764,176 @@ export function mountColoringGame(root, options = {}) {
           aria-pressed="${isActive}"
         >
           <span class="sr-only">${t(entry.labelKey)}</span>
-          <span class="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
+          <span class="flex h-6 w-6 items-center justify-center text-accent">
             <i aria-hidden="true" class="fa-solid fa-circle" style="font-size: ${iconSizeRem}rem;"></i>
           </span>
         </button>
       `;
     }).join('');
+  }
+
+  function getPaletteScrollStep() {
+    if (!paletteContainer) {
+      return 0;
+    }
+
+    const basis = paletteContainer.clientHeight;
+    if (!Number.isFinite(basis) || basis <= 0) {
+      return 96;
+    }
+
+    return Math.max(72, basis * 0.75);
+  }
+
+  function updatePaletteScrollIndicators() {
+    if (!paletteContainer || paletteScrollButtons.length === 0) {
+      return;
+    }
+
+    const { scrollTop, scrollHeight, clientHeight } = paletteContainer;
+    const maxScrollTop = Math.max(0, scrollHeight - clientHeight);
+    const atTop = scrollTop <= 2;
+    const atBottom = scrollTop >= maxScrollTop - 2;
+
+    paletteScrollButtons.forEach((button) => {
+      const direction = button.getAttribute('data-palette-scroll');
+      if (direction === 'up') {
+        button.disabled = atTop;
+      } else if (direction === 'down') {
+        button.disabled = atBottom;
+      }
+    });
+  }
+
+  function scrollPalette(direction) {
+    if (!paletteContainer) {
+      return;
+    }
+
+    const delta = getPaletteScrollStep();
+
+    if (delta <= 0) {
+      return;
+    }
+
+    const amount = direction === 'down' ? delta : -delta;
+
+    if (typeof paletteContainer.scrollBy === 'function') {
+      try {
+        paletteContainer.scrollBy({ top: amount, behavior: 'smooth' });
+      } catch (error) {
+        paletteContainer.scrollTop += amount;
+      }
+    } else {
+      paletteContainer.scrollTop += amount;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(updatePaletteScrollIndicators);
+    } else {
+      updatePaletteScrollIndicators();
+    }
+  }
+
+  function handlePaletteScrollClick(event) {
+    const button = event.target.closest('[data-palette-scroll]');
+
+    if (!button) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const direction = button.getAttribute('data-palette-scroll');
+
+    if (!direction) {
+      return;
+    }
+
+    scrollPalette(direction === 'down' ? 'down' : 'up');
+    playUiSound('action');
+  }
+
+  function resetPaletteSwipeState() {
+    paletteSwipeState.pointerId = null;
+    paletteSwipeState.isTracking = false;
+    paletteSwipeState.isSwiping = false;
+    paletteSwipeState.startY = 0;
+    paletteSwipeState.startScrollTop = 0;
+  }
+
+  function handlePalettePointerDown(event) {
+    if (!paletteContainer) {
+      return;
+    }
+
+    if (event.pointerType !== 'touch' && event.pointerType !== 'pen') {
+      return;
+    }
+
+    if (paletteSwipeState.pointerId !== null) {
+      return;
+    }
+
+    paletteSwipeState.pointerId = event.pointerId;
+    paletteSwipeState.isTracking = true;
+    paletteSwipeState.isSwiping = false;
+    paletteSwipeState.startY = event.clientY;
+    paletteSwipeState.startScrollTop = paletteContainer.scrollTop;
+
+    try {
+      paletteContainer.setPointerCapture(event.pointerId);
+    } catch (error) {
+      // ignore capture errors when unsupported
+    }
+  }
+
+  function handlePalettePointerMove(event) {
+    if (!paletteContainer || !paletteSwipeState.isTracking || event.pointerId !== paletteSwipeState.pointerId) {
+      return;
+    }
+
+    const deltaY = event.clientY - paletteSwipeState.startY;
+
+    if (!paletteSwipeState.isSwiping) {
+      if (Math.abs(deltaY) < 4) {
+        return;
+      }
+
+      paletteSwipeState.isSwiping = true;
+    }
+
+    paletteContainer.scrollTop = paletteSwipeState.startScrollTop - deltaY;
+    updatePaletteScrollIndicators();
+    event.preventDefault();
+  }
+
+  function handlePalettePointerEnd(event) {
+    if (!paletteContainer || event.pointerId !== paletteSwipeState.pointerId) {
+      return;
+    }
+
+    if (paletteSwipeState.isSwiping) {
+      event.preventDefault();
+    }
+
+    try {
+      paletteContainer.releasePointerCapture(event.pointerId);
+    } catch (error) {
+      // ignore release errors when unsupported
+    }
+
+    resetPaletteSwipeState();
+
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(updatePaletteScrollIndicators);
+    } else {
+      updatePaletteScrollIndicators();
+    }
+  }
+
+  function handlePalettePointerCancel(event) {
+    handlePalettePointerEnd(event);
   }
 
   function renderTemplates() {
@@ -1741,6 +1941,7 @@ export function mountColoringGame(root, options = {}) {
   addListener(templateOptions, 'click', handleTemplateClick, false, disposers);
   addListener(toolContainer, 'click', handleToolClick, false, disposers);
   addListener(paletteContainer, 'click', handlePaletteClick, false, disposers);
+  addListener(root, 'click', handlePaletteScrollClick, false, disposers);
   addListener(brushContainer, 'click', handleBrushSizeClick, false, disposers);
   addListener(root, 'click', handleActionClick, false, disposers);
   addListener(canvas, 'pointerdown', handlePointerDown, false, disposers);
@@ -1754,6 +1955,15 @@ export function mountColoringGame(root, options = {}) {
   addListener(document, 'webkitfullscreenchange', handleFullscreenChange, false, disposers);
   addListener(document, 'mozfullscreenchange', handleFullscreenChange, false, disposers);
   addListener(document, 'MSFullscreenChange', handleFullscreenChange, false, disposers);
+
+  if (paletteContainer) {
+    addListener(paletteContainer, 'scroll', updatePaletteScrollIndicators, { passive: true }, disposers);
+    addListener(paletteContainer, 'pointerdown', handlePalettePointerDown, false, disposers);
+    addListener(paletteContainer, 'pointermove', handlePalettePointerMove, false, disposers);
+    addListener(paletteContainer, 'pointerup', handlePalettePointerEnd, false, disposers);
+    addListener(paletteContainer, 'pointercancel', handlePalettePointerCancel, false, disposers);
+    addListener(paletteContainer, 'pointerleave', handlePalettePointerEnd, false, disposers);
+  }
 
   if (clearButton) {
     addListener(clearButton, 'pointerdown', handleClearPointerDown, false, disposers);

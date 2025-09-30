@@ -168,7 +168,9 @@
     "activeColorLabel": "Actieve kleur: {label}",
     "palette": {
       "heading": "Kleurpalet",
-      "hint": "Tip: kleur eerst met de kwast langs de randen en vul grote vlakken daarna met de emmer."
+      "hint": "Tip: kleur eerst met de kwast langs de randen en vul grote vlakken daarna met de emmer.",
+      "scrollUp": "Scroll naar boven",
+      "scrollDown": "Scroll naar beneden"
     },
     "templates": {
       "heading": "Kies je kleurplaat",
