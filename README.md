@@ -1,5 +1,7 @@
 # Kwispel Promosite
 
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-live-success)](https://solvesoul.github.io/kwispel-web/)
+
 Promotional website for the Flemish children’s IP “Kwispel”. Built with Vite, vanilla JavaScript modules, and Tailwind CSS. Default language is Flemish with groundwork for future translations.
 
 ## Prerequisites
